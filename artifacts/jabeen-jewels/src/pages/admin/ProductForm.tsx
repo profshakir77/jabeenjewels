@@ -280,42 +280,20 @@ export default function ProductForm() {
             <div className="space-y-6">
               <div className="bg-card border border-border p-6 rounded-xl space-y-6">
                 <h3 className="font-semibold text-lg">Images</h3>
-                
-                {/* Very simple image array handling for this build */}
-                <div className="space-y-3">
-                   <FormField
-                    control={form.control}
-                    name="images"
-                    render={({ field }) => {
-                      const addImage = () => field.onChange([...field.value, "/attached_assets/generated_images/rings.jpg"]);
-                      const removeImage = (i: number) => {
-                        const newImages = [...field.value];
-                        newImages.splice(i, 1);
-                        field.onChange(newImages);
-                      };
-                      return (
-                        <FormItem>
-                          <div className="grid grid-cols-2 gap-2 mb-4">
-                            {field.value.map((img, i) => (
-                              <div key={i} className="relative aspect-square border border-border rounded overflow-hidden group">
-                                <img src={img} className="w-full h-full object-cover" alt="" />
-                                <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
-                            <button type="button" onClick={addImage} className="aspect-square border border-dashed border-border rounded flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
-                              <ImagePlus className="w-6 h-6 mb-2" />
-                              <span className="text-xs">Add Image</span>
-                            </button>
-                          </div>
-                          <FormDescription>Click Add Image to insert a placeholder. In a full implementation this would be an upload component.</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )
-                    }}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="images"
+                  render={({ field }) => (
+                    <FormItem>
+                      <ImageUploader
+                        images={field.value}
+                        onChange={field.onChange}
+                        max={8}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="bg-card border border-border p-6 rounded-xl space-y-6">

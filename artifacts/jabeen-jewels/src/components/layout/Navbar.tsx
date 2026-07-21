@@ -25,7 +25,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Announcement Bar */}
       <div className="bg-primary text-primary-foreground py-2 text-center text-xs sm:text-sm font-medium tracking-wide">
-        Free Delivery on orders above Rs. 5,000 | Order via WhatsApp 03338479799
+        Free Delivery on orders above Rs. 5,000 - Order via WhatsApp 03338479799
       </div>
 
       <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">

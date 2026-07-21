@@ -15,6 +15,7 @@ import Search from './pages/customer/Search';
 
 // Admin Pages
 import AdminLogin from './pages/admin/Login';
+import ChangePassword from './pages/admin/ChangePassword';
 import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import ProductForm from './pages/admin/ProductForm';
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/admin/categories" component={() => <ProtectedRoute component={AdminCategories} />} />
       <Route path="/admin/orders" component={() => <ProtectedRoute component={AdminOrders} />} />
       <Route path="/admin/banners" component={() => <ProtectedRoute component={AdminBanners} />} />
+      <Route path="/admin/change-password" component={() => <ProtectedRoute component={ChangePassword} />} />
 
       {/* 404 */}
       <Route component={NotFound} />

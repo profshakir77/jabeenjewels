@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAdminLogout } from "@workspace/api-client-react";
-import { LayoutDashboard, ShoppingBag, FolderTree, Package, Image as ImageIcon, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, FolderTree, Package, Image as ImageIcon, LogOut, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +23,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Products", href: "/admin/products", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: FolderTree },
     { label: "Banners", href: "/admin/banners", icon: ImageIcon },
+    { label: "Change Password", href: "/admin/change-password", icon: KeyRound },
   ];
 
   return (

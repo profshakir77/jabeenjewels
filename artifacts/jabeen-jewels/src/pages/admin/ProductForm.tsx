@@ -12,7 +12,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
 
 const productSchema = z.object({
@@ -96,11 +97,6 @@ export default function ProductForm() {
   };
 
   const onSubmit = (data: ProductValues) => {
-    // Add default image if empty to prevent empty arrays for now
-    if (data.images.length === 0) {
-      data.images = ["/attached_assets/generated_images/rings.jpg"];
-    }
-
     if (isEditing) {
       updateMutation.mutate({ id: productId, data }, {
         onSuccess: () => {

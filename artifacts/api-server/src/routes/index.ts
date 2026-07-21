@@ -6,6 +6,7 @@ import ordersRouter from "./orders";
 import bannersRouter from "./banners";
 import storeRouter from "./store";
 import adminRouter from "./admin";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(ordersRouter);
 router.use(bannersRouter);
 router.use(storeRouter);
 router.use(adminRouter);
+router.use(storageRouter);
 
 export default router;

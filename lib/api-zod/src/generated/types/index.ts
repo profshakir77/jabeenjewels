@@ -28,4 +28,7 @@ export * from './orderStatusUpdateStatus';
 export * from './product';
 export * from './productInput';
 export * from './productList';
+export * from './requestUploadUrlBody';
+export * from './requestUploadUrlResponse';
+export * from './requestUploadUrlResponseMetadata';
 export * from './storeStats';

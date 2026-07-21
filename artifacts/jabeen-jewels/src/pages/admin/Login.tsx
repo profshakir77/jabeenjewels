@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp, Terminal } from "lucide-react";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showForgot, setShowForgot] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
@@ -95,6 +96,32 @@ export default function AdminLogin() {
             Login
           </Button>
         </form>
+
+        <div className="mt-6 border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowForgot(!showForgot)}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-full justify-center transition-colors"
+          >
+            Forgot password?
+            {showForgot ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+
+          {showForgot && (
+            <div className="mt-3 rounded-lg bg-muted/60 border border-border p-4 text-sm space-y-2">
+              <p className="text-muted-foreground">
+                Open the <strong>Shell</strong> tab in Replit and run:
+              </p>
+              <div className="flex items-start gap-2 bg-background rounded-md border border-border px-3 py-2 font-mono text-xs break-all">
+                <Terminal className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                <span>node scripts/reset-admin-password.mjs admin <em>NewPassword</em></span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Replace <em>NewPassword</em> with your new password (min 8 characters).
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

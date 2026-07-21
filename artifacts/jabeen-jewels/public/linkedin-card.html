@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=1200"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,600&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    width:1200px;height:628px;overflow:hidden;
+    background:linear-gradient(135deg,#0d0d1a 0%,#1a0a2e 40%,#0d1a2e 100%);
+    font-family:'Inter',sans-serif;
+    position:relative;
+  }
+
+  /* background decorative elements */
+  .bg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;pointer-events:none;}
+  .orb1{width:400px;height:400px;background:radial-gradient(circle,#c084fc,transparent);top:-100px;left:-80px;}
+  .orb2{width:350px;height:350px;background:radial-gradient(circle,#f472b6,transparent);bottom:-80px;right:200px;}
+  .orb3{width:250px;height:250px;background:radial-gradient(circle,#60a5fa,transparent);top:50px;right:80px;}
+
+  /* grid lines */
+  .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;}
+
+  .card{position:relative;z-index:10;display:flex;height:100%;padding:32px 36px;gap:32px;align-items:center;}
+
+  /* ── LEFT COLUMN ── */
+  .left{flex:0 0 460px;display:flex;flex-direction:column;gap:20px;}
+
+  .brand-row{display:flex;align-items:center;gap:12px;}
+  .brand-logo{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.2);object-fit:cover;}
+  .brand-name{font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:.3px;}
+  .brand-url{font-size:12px;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+
+  .headline{font-size:28px;font-weight:800;line-height:1.25;color:#fff;letter-spacing:-.3px;}
+  .headline span{background:linear-gradient(90deg,#f472b6,#c084fc,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+  .dev-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    border-radius:100px;padding:8px 16px;width:fit-content;
+  }
+  .dev-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#c084fc);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+  .dev-text{font-size:13px;color:#e2e8f0;font-weight:500;}
+  .dev-text strong{color:#fff;}
+
+  /* tech stack */
+  .stack-label{font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:1.2px;text-transform:uppercase;}
+  .tech-grid{display:flex;flex-wrap:wrap;gap:7px;}
+  .tech-pill{
+    display:flex;align-items:center;gap:5px;
+    padding:5px 11px;border-radius:100px;font-size:11.5px;font-weight:600;
+    border:1px solid;white-space:nowrap;
+  }
+  .tech-pill .dot{width:6px;height:6px;border-radius:50%;}
+
+  /* colours per tech */
+  .react   {background:rgba(97,218,251,.12);border-color:rgba(97,218,251,.35);color:#61dafb;}
+  .ts      {background:rgba(49,120,198,.15);border-color:rgba(49,120,198,.4);color:#60a5fa;}
+  .node    {background:rgba(104,160,99,.12);border-color:rgba(104,160,99,.4);color:#86efac;}
+  .express {background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#e2e8f0;}
+  .pg      {background:rgba(51,103,145,.15);border-color:rgba(51,103,145,.4);color:#7dd3fc;}
+  .drizzle {background:rgba(196,181,253,.1);border-color:rgba(196,181,253,.3);color:#c4b5fd;}
+  .tw      {background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:#38bdf8;}
+  .vite    {background:rgba(189,52,254,.1);border-color:rgba(189,52,254,.3);color:#d8b4fe;}
+  .zod     {background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:#f9a8d4;}
+  .query   {background:rgba(255,165,0,.1);border-color:rgba(255,165,0,.25);color:#fbbf24;}
+  .oapi    {background:rgba(100,200,100,.1);border-color:rgba(100,200,100,.25);color:#86efac;}
+  .resend  {background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#cbd5e1;}
+  .gcs     {background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.25);color:#fde047;}
+  .pnpm    {background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.25);color:#fb923c;}
+
+  /* features */
+  .features{display:flex;flex-direction:column;gap:6px;}
+  .feat{display:flex;align-items:center;gap:7px;font-size:12px;color:#cbd5e1;}
+  .feat::before{content:'✦';color:#f472b6;font-size:9px;flex-shrink:0;}
+
+  /* ── RIGHT COLUMN ── */
+  .right{flex:1;position:relative;height:100%;display:flex;align-items:center;justify-content:center;}
+
+  /* desktop mockup */
+  .desktop-frame{
+    position:absolute;top:18px;left:0px;
+    width:360px;
+    background:#1e1e2e;border-radius:10px;
+    box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.1);
+    overflow:hidden;
+  }
+  .desktop-bar{height:24px;background:#2a2a3e;display:flex;align-items:center;padding:0 10px;gap:5px;}
+  .dot-r{width:8px;height:8px;border-radius:50%;background:#ff5f57;}
+  .dot-y{width:8px;height:8px;border-radius:50%;background:#ffbd2e;}
+  .dot-g{width:8px;height:8px;border-radius:50%;background:#28ca41;}
+  .desktop-url{flex:1;margin:0 8px;background:#1a1a2e;border-radius:4px;height:13px;display:flex;align-items:center;padding:0 6px;}
+  .desktop-url span{font-size:8px;color:#94a3b8;letter-spacing:.3px;}
+  .desktop-screen img{width:100%;display:block;}
+
+  /* mobile mockup */
+  .mobile-frame{
+    position:absolute;bottom:14px;right:-10px;
+    width:142px;
+    background:#1e1e2e;border-radius:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12);
+    overflow:hidden;
+    border:3px solid #2a2a3e;
+  }
+  .mobile-notch{height:16px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;}
+  .notch-pill{width:36px;height:6px;background:#2a2a3e;border-radius:10px;}
+  .mobile-screen img{width:100%;display:block;}
+  .mobile-home{height:8px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;}
+  .home-bar{width:40px;height:3px;background:#3a3a4e;border-radius:10px;}
+
+  /* floating tags */
+  .float-tag{
+    position:absolute;
+    background:rgba(15,15,26,.85);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;
+    padding:7px 12px;
+    font-size:11px;
+    font-weight:600;
+    color:#fff;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+    white-space:nowrap;
+  }
+  .tag-responsive{top:22px;right:2px;color:#86efac;border-color:rgba(134,239,172,.25);}
+  .tag-responsive::before{content:'✓ ';color:#4ade80;}
+  .tag-fullstack{top:90px;right:4px;color:#f9a8d4;border-color:rgba(249,168,212,.25);}
+  .tag-pwa{bottom:80px;left:10px;color:#fbbf24;border-color:rgba(251,191,36,.25);}
+
+  /* divider */
+  .vdivider{width:1px;height:80%;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.1),transparent);align-self:center;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+<div class="grid"></div>
+
+<div class="card">
+  <!-- LEFT -->
+  <div class="left">
+
+    <div class="brand-row">
+      <img class="brand-logo" src="/logo.png" alt="Jabeen Jewels"/>
+      <div>
+        <div class="brand-name">Jabeen Jewels</div>
+        <div class="brand-url">jabeenjewels.pk</div>
+      </div>
+    </div>
+
+    <div class="headline">
+      Full-Stack<br/>
+      <span>E-Commerce Platform</span><br/>
+      Built from Scratch
+    </div>
+
+    <div class="dev-badge">
+      <div class="dev-avatar">SH</div>
+      <div class="dev-text">Developed by <strong>Shakir Hussain</strong></div>
+    </div>
+
+    <div>
+      <div class="stack-label" style="margin-bottom:10px;">Tech Stack</div>
+      <div class="tech-grid">
+        <div class="tech-pill react"><div class="dot" style="background:#61dafb"></div>React 18</div>
+        <div class="tech-pill ts"><div class="dot" style="background:#3178c6"></div>TypeScript</div>
+        <div class="tech-pill node"><div class="dot" style="background:#68a063"></div>Node.js</div>
+        <div class="tech-pill express"><div class="dot" style="background:#aaa"></div>Express 5</div>
+        <div class="tech-pill pg"><div class="dot" style="background:#336791"></div>PostgreSQL</div>
+        <div class="tech-pill drizzle"><div class="dot" style="background:#c4b5fd"></div>Drizzle ORM</div>
+        <div class="tech-pill tw"><div class="dot" style="background:#38bdf8"></div>Tailwind CSS</div>
+        <div class="tech-pill vite"><div class="dot" style="background:#bd34fe"></div>Vite</div>
+        <div class="tech-pill zod"><div class="dot" style="background:#f472b6"></div>Zod</div>
+        <div class="tech-pill query"><div class="dot" style="background:#fbbf24"></div>TanStack Query</div>
+        <div class="tech-pill oapi"><div class="dot" style="background:#86efac"></div>OpenAPI + Orval</div>
+        <div class="tech-pill resend"><div class="dot" style="background:#aaa"></div>Resend</div>
+        <div class="tech-pill gcs"><div class="dot" style="background:#fde047"></div>Cloud Storage</div>
+        <div class="tech-pill pnpm"><div class="dot" style="background:#fb923c"></div>pnpm Monorepo</div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feat">Full-stack monorepo · API-first OpenAPI design</div>
+      <div class="feat">Session auth · OTP password recovery via email</div>
+      <div class="feat">Admin dashboard · image uploads · banner management</div>
+      <div class="feat">WhatsApp ordering · color variants · stock tracking</div>
+    </div>
+
+  </div>
+
+  <div class="vdivider"></div>
+
+  <!-- RIGHT -->
+  <div class="right">
+
+    <!-- desktop mockup -->
+    <div class="desktop-frame">
+      <div class="desktop-bar">
+        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
+        <div class="desktop-url"><span>jabeenjewels.pk</span></div>
+      </div>
+      <div class="desktop-screen">
+        <img src="/jabeen-desktop-ss.jpg" alt="Desktop view"/>
+      </div>
+    </div>
+
+    <!-- mobile mockup -->
+    <div class="mobile-frame">
+      <div class="mobile-notch"><div class="notch-pill"></div></div>
+      <div class="mobile-screen">
+        <img src="/jabeen-mobile-ss.jpg" alt="Mobile view"/>
+      </div>
+      <div class="mobile-home"><div class="home-bar"></div></div>
+    </div>
+
+    <!-- floating tags -->
+    <div class="float-tag tag-responsive">Fully Responsive</div>
+    <div class="float-tag tag-fullstack">⚡ Full-Stack</div>
+    <div class="float-tag tag-pwa">🛒 E-Commerce</div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -10,7 +10,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <img 
-                src="/attached_assets/jabeen_jewels_1784614581920.png" 
+                src="/logo.png" 
                 alt="Jabeen Jewels Logo" 
                 className="h-10 w-10 object-contain rounded-full border border-primary/20 p-1 bg-background"
               />

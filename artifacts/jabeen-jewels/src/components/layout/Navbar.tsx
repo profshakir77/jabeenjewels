@@ -57,7 +57,7 @@ export function Navbar() {
         <div className="flex-1 lg:flex-none flex justify-center lg:justify-start">
           <Link href="/" className="flex items-center gap-3">
             <img 
-              src="/attached_assets/jabeen_jewels_1784614581920.png" 
+              src="/logo.png" 
               alt="Jabeen Jewels Logo" 
               className="h-12 w-12 object-contain rounded-full border border-primary/20 p-1"
             />

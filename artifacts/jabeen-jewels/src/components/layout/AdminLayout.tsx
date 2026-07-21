@@ -1,16 +1,20 @@
 import { Link, useLocation } from "wouter";
-import { useAdminLogout } from "@workspace/api-client-react";
+import { useAdminLogout, getGetAdminMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, ShoppingBag, FolderTree, Package, Image as ImageIcon, LogOut, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const logout = useAdminLogout();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        // Clear the cached admin session so Login.tsx doesn't redirect back to /admin
+        queryClient.removeQueries({ queryKey: getGetAdminMeQueryKey() });
         toast({ title: "Logged out successfully" });
         setLocation("/admin/login");
       }

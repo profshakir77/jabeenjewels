@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAdminLogin, useGetAdminMe } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -14,16 +14,22 @@ export default function AdminLogin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
-  const { data: user, isLoading: isCheckingAuth } = useGetAdminMe({
-    query: { retry: false }
+  const { data: user, isLoading: isCheckingAuth, isError } = useGetAdminMe({
+    query: { retry: false, staleTime: 0 }
   });
+
+  const redirected = useRef(false);
 
   useEffect(() => {
     document.title = "Admin Login | Jabeen Jewels";
-    if (user) {
+    // Only redirect when confirmed logged in — ref guard prevents infinite loop
+    // caused by wouter's setLocation not being referentially stable.
+    if (!isCheckingAuth && !isError && user && !redirected.current) {
+      redirected.current = true;
       setLocation("/admin");
     }
-  }, [user, setLocation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCheckingAuth, isError, user]);
 
   const login = useAdminLogin();
 

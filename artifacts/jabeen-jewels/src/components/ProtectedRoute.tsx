@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useGetAdminMe } from "@workspace/api-client-react";
 
@@ -8,13 +8,21 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ component: Component }: ProtectedRouteProps) {
   const [, setLocation] = useLocation();
-  const { data, isLoading, isError } = useGetAdminMe();
+  const { data, isLoading, isError } = useGetAdminMe({
+    query: { retry: false, staleTime: 0 }
+  });
+
+  // Use a ref so the redirect only fires once — avoids the infinite loop caused
+  // by wouter's setLocation not being referentially stable across renders.
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && (isError || !data)) {
+    if (!isLoading && (isError || !data) && !redirected.current) {
+      redirected.current = true;
       setLocation("/admin/login");
     }
-  }, [isLoading, isError, data, setLocation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isError, data]);
 
   if (isLoading) {
     return (

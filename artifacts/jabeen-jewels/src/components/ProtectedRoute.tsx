@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useGetAdminMe } from "@workspace/api-client-react";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   component: React.ComponentType;
@@ -12,8 +13,6 @@ export function ProtectedRoute({ component: Component }: ProtectedRouteProps) {
     query: { retry: false, staleTime: 0 }
   });
 
-  // Use a ref so the redirect only fires once — avoids the infinite loop caused
-  // by wouter's setLocation not being referentially stable across renders.
   const redirected = useRef(false);
 
   useEffect(() => {
@@ -24,16 +23,13 @@ export function ProtectedRoute({ component: Component }: ProtectedRouteProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isError, data]);
 
-  if (isLoading) {
+  // Show spinner while checking auth OR while redirect is in flight
+  if (isLoading || (isError || !data)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-muted/20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (isError || !data) {
-    return null;
   }
 
   return <Component />;

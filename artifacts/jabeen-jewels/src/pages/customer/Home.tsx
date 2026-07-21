@@ -48,7 +48,7 @@ export default function Home() {
   const heroBanner = banners?.find(b => b.isActive) || {
     title: "Timeless Beauty",
     subtitle: "Discover pieces that speak to your soul",
-    imageUrl: "/attached_assets/generated_images/hero-banner.jpg",
+    imageUrl: "/img-hero.jpg",
     buttonText: "Shop Collection",
     linkUrl: "/shop"
   };
@@ -59,7 +59,7 @@ export default function Home() {
       <section className="relative h-[80vh] min-h-[600px] w-full overflow-hidden bg-muted">
         <div className="absolute inset-0">
           <img 
-            src={heroBanner.imageUrl || "/attached_assets/generated_images/hero-banner.jpg"} 
+            src={heroBanner.imageUrl || "/img-hero.jpg"} 
             alt={heroBanner.title}
             className="w-full h-full object-cover object-center"
           />
@@ -123,7 +123,7 @@ export default function Home() {
             {categories.slice(0, 4).map((category, index) => (
               <Link key={category.id} href={`/category/${category.slug}`} className="group relative overflow-hidden aspect-[4/5] bg-muted flex items-center justify-center text-center">
                 <img 
-                  src={category.imageUrl || (index % 2 === 0 ? "/attached_assets/generated_images/rings.jpg" : "/attached_assets/generated_images/necklaces.jpg")} 
+                  src={category.imageUrl || (index % 2 === 0 ? "/img-rings.jpg" : "/img-necklaces.jpg")} 
                   alt={category.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />

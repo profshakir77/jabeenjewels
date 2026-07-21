@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Jabeen Jewels"
+version = "1.0.0"
+id = "artifacts/jabeen-jewels"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23515
+
+[services.development]
+run = "pnpm --filter @workspace/jabeen-jewels run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/jabeen-jewels", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/jabeen-jewels/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23515"
+BASE_PATH = "/"

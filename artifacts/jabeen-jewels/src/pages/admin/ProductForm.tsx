@@ -1,0 +1,391 @@
+import { useEffect } from "react";
+import { useLocation, useParams } from "wouter";
+import { useGetProduct, useCreateProduct, useUpdateProduct, useListCategories, getListProductsQueryKey, getGetProductQueryKey } from "@workspace/api-client-react";
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Loader2, ImagePlus, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+
+const productSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  slug: z.string().min(2, "Slug is required"),
+  description: z.string().optional(),
+  price: z.coerce.number().min(1, "Price must be greater than 0"),
+  salePrice: z.coerce.number().optional().nullable(),
+  categoryId: z.coerce.number().min(1, "Category is required"),
+  images: z.array(z.string()).default([]),
+  inStock: z.boolean().default(true),
+  stockQuantity: z.coerce.number().optional().nullable(),
+  isFeatured: z.boolean().default(false),
+  isNewArrival: z.boolean().default(false),
+  isOnSale: z.boolean().default(false),
+  material: z.string().optional(),
+});
+
+type ProductValues = z.infer<typeof productSchema>;
+
+export default function ProductForm() {
+  const { id } = useParams();
+  const isEditing = !!id && id !== "new";
+  const productId = parseInt(id || "0");
+  
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: categories } = useListCategories();
+  const { data: product, isLoading: isProductLoading } = useGetProduct(productId, {
+    query: { enabled: isEditing }
+  });
+
+  const createMutation = useCreateProduct();
+  const updateMutation = useUpdateProduct();
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const form = useForm<ProductValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      slug: "",
+      description: "",
+      price: 0,
+      salePrice: null,
+      categoryId: 0,
+      images: [],
+      inStock: true,
+      stockQuantity: 10,
+      isFeatured: false,
+      isNewArrival: false,
+      isOnSale: false,
+      material: "",
+    },
+  });
+
+  useEffect(() => {
+    document.title = isEditing ? "Edit Product | Admin" : "New Product | Admin";
+    if (isEditing && product) {
+      form.reset({
+        ...product,
+        images: product.images || [],
+        salePrice: product.salePrice || null,
+        stockQuantity: product.stockQuantity || null,
+        description: product.description || "",
+        material: product.material || "",
+      });
+    }
+  }, [isEditing, product, form]);
+
+  const generateSlug = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  };
+
+  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue("name", e.target.value);
+    if (!isEditing && !form.getValues("slug")) {
+      form.setValue("slug", generateSlug(e.target.value), { shouldValidate: true });
+    }
+  };
+
+  const onSubmit = (data: ProductValues) => {
+    // Add default image if empty to prevent empty arrays for now
+    if (data.images.length === 0) {
+      data.images = ["/attached_assets/generated_images/rings.jpg"];
+    }
+
+    if (isEditing) {
+      updateMutation.mutate({ id: productId, data }, {
+        onSuccess: () => {
+          toast({ title: "Product updated successfully" });
+          queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetProductQueryKey(productId) });
+          setLocation("/admin/products");
+        },
+        onError: () => toast({ title: "Failed to update product", variant: "destructive" })
+      });
+    } else {
+      createMutation.mutate({ data }, {
+        onSuccess: () => {
+          toast({ title: "Product created successfully" });
+          queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+          setLocation("/admin/products");
+        },
+        onError: () => toast({ title: "Failed to create product", variant: "destructive" })
+      });
+    }
+  };
+
+  if (isEditing && isProductLoading) {
+    return <AdminLayout><div className="flex h-32 items-center justify-center"><Loader2 className="animate-spin" /></div></AdminLayout>;
+  }
+
+  return (
+    <AdminLayout>
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="outline" size="icon" onClick={() => window.history.back()}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{isEditing ? "Edit Product" : "Add New Product"}</h1>
+        </div>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Main Info */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Ruby Kundan Necklace" {...field} onChange={(e) => {
+                          field.onChange(e);
+                          onNameChange(e);
+                        }} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL Slug</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select onValueChange={(v) => field.onChange(parseInt(v))} value={field.value ? String(field.value) : ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories?.map((cat) => (
+                              <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Describe the piece..." className="min-h-[150px]" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Pricing */}
+              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
+                <h3 className="font-semibold text-lg">Pricing & Inventory</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price (PKR)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="salePrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sale Price (Optional)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormDescription>Leave empty if not on sale</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
+                   <FormField
+                    control={form.control}
+                    name="inStock"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">In Stock</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="stockQuantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} value={field.value || ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
+                <h3 className="font-semibold text-lg">Images</h3>
+                
+                {/* Very simple image array handling for this build */}
+                <div className="space-y-3">
+                   <FormField
+                    control={form.control}
+                    name="images"
+                    render={({ field }) => {
+                      const addImage = () => field.onChange([...field.value, "/attached_assets/generated_images/rings.jpg"]);
+                      const removeImage = (i: number) => {
+                        const newImages = [...field.value];
+                        newImages.splice(i, 1);
+                        field.onChange(newImages);
+                      };
+                      return (
+                        <FormItem>
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            {field.value.map((img, i) => (
+                              <div key={i} className="relative aspect-square border border-border rounded overflow-hidden group">
+                                <img src={img} className="w-full h-full object-cover" alt="" />
+                                <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                            <button type="button" onClick={addImage} className="aspect-square border border-dashed border-border rounded flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
+                              <ImagePlus className="w-6 h-6 mb-2" />
+                              <span className="text-xs">Add Image</span>
+                            </button>
+                          </div>
+                          <FormDescription>Click Add Image to insert a placeholder. In a full implementation this would be an upload component.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
+                <h3 className="font-semibold text-lg">Display Options</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Featured</FormLabel>
+                          <FormDescription>Show on homepage</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isNewArrival"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">New Arrival</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isOnSale"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">On Sale</FormLabel>
+                          <FormDescription>Requires Sale Price</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-4 sticky bottom-0 bg-background/80 backdrop-blur-md p-4 border-t border-border -mx-6 md:-mx-8">
+            <Button type="button" variant="outline" onClick={() => window.history.back()}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEditing ? "Save Changes" : "Create Product"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </AdminLayout>
+  );
+}

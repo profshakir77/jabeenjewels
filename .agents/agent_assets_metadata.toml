@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "7t_p5trphTECxVqsdQbbY"
+uri = "file://attached_assets/generated_images/linkedin-post-1.jpg"
+type = "image"
+title = "Option 1 — Wide (16:9) Laptop + Jewelry + Tech Stack"
+
+[[outputs]]
+id = "tLAmEvQ_hUnXR6F4Wascf"
+uri = "file://attached_assets/generated_images/linkedin-post-2.jpg"
+type = "image"
+title = "Option 2 — Square (1:1) Split Tech / Jewelry"

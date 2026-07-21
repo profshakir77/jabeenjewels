@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { KeyRound, Eye, EyeOff } from "lucide-react";
+import { KeyRound, Eye, EyeOff, Mail, CheckCircle2 } from "lucide-react";
 
 export default function ChangePassword() {
   useEffect(() => {
@@ -13,11 +13,31 @@ export default function ChangePassword() {
   }, []);
 
   const { toast } = useToast();
+
+  // ── Change password state ──
   const [loading, setLoading] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+  // ── Recovery email state ──
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [savedEmail, setSavedEmail] = useState<string | null>(null);
+  const [emailFetched, setEmailFetched] = useState(false);
+
+  // Fetch current recovery email on mount
+  useEffect(() => {
+    fetch("/api/admin/profile", { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        setSavedEmail(data.email ?? null);
+        setRecoveryEmail(data.email ?? "");
+        setEmailFetched(true);
+      })
+      .catch(() => setEmailFetched(true));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,17 +74,85 @@ export default function ChangePassword() {
     }
   };
 
+  const handleSaveEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailLoading(true);
+    try {
+      const res = await fetch("/api/admin/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: recoveryEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: data.error ?? "Failed to save email", variant: "destructive" });
+      } else {
+        setSavedEmail(recoveryEmail);
+        toast({ title: "Recovery email saved" });
+      }
+    } catch {
+      toast({ title: "Network error. Please try again.", variant: "destructive" });
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   return (
     <AdminLayout>
-      <div className="max-w-md">
+      <div className="max-w-md space-y-6">
         <div className="flex items-center gap-3 mb-6">
           <KeyRound className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-serif font-bold">Change Password</h1>
+          <h1 className="text-2xl font-serif font-bold">Security</h1>
         </div>
 
+        {/* Recovery Email */}
         <Card>
           <CardHeader>
-            <CardTitle>Update your password</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              Recovery Email
+            </CardTitle>
+            <CardDescription>
+              Used to receive a one-time code when you forget your password.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!emailFetched ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : (
+              <form onSubmit={handleSaveEmail} className="space-y-3">
+                {savedEmail && (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Currently set to <strong>{savedEmail}</strong></span>
+                  </div>
+                )}
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={recoveryEmail}
+                  onChange={e => setRecoveryEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="w-full"
+                  disabled={emailLoading || recoveryEmail === savedEmail}
+                >
+                  {emailLoading ? "Saving…" : savedEmail ? "Update Email" : "Save Email"}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Change Password */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
             <CardDescription>
               Choose a strong password with at least 8 characters.
             </CardDescription>
@@ -137,19 +225,11 @@ export default function ChangePassword() {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Updating..." : "Update Password"}
+                {loading ? "Updating…" : "Update Password"}
               </Button>
             </form>
           </CardContent>
         </Card>
-
-        <div className="mt-6 p-4 bg-muted rounded-lg text-sm text-muted-foreground space-y-1">
-          <p className="font-medium text-foreground">Locked out?</p>
-          <p>Run this command in the Replit Shell tab to reset your password:</p>
-          <code className="block mt-2 p-2 bg-background rounded text-xs font-mono break-all">
-            node scripts/reset-admin-password.mjs admin YourNewPassword
-          </code>
-        </div>
       </div>
     </AdminLayout>
   );

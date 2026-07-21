@@ -3,6 +3,23 @@ import { z } from 'zod';
 import { Router, type IRouter, type Request, type Response } from 'express';
 import { requireAdmin } from '../middleware/requireAdmin';
 
+// ── Simple in-memory cache for public objects ─────────────────────────────────
+// Avoids hitting GCS on every request (sidecar round-trip is slow).
+interface CachedObject { buf: Buffer; contentType: string; expiresAt: number; }
+const publicObjectCache = new Map<string, CachedObject>();
+const PUBLIC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCached(key: string): CachedObject | null {
+  const entry = publicObjectCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { publicObjectCache.delete(key); return null; }
+  return entry;
+}
+function setCached(key: string, buf: Buffer, contentType: string) {
+  publicObjectCache.set(key, { buf, contentType, expiresAt: Date.now() + PUBLIC_CACHE_TTL_MS });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const RequestUploadUrlBody = z.object({
   name: z.string(),
   size: z.number(),
@@ -89,6 +106,17 @@ router.get(
     try {
       const raw = req.params.filePath;
       const filePath = Array.isArray(raw) ? raw.join('/') : raw;
+
+      // Serve from cache if available
+      const cached = getCached(filePath);
+      if (cached) {
+        res.setHeader('Content-Type', cached.contentType);
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        res.setHeader('X-Cache', 'HIT');
+        res.send(cached.buf);
+        return;
+      }
+
       const file = await objectStorageService.searchPublicObject(filePath);
       if (!file) {
         res.status(404).json({ error: 'File not found' });
@@ -96,18 +124,17 @@ router.get(
       }
 
       const response = await objectStorageService.downloadObject(file);
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
-      res.status(response.status);
-      response.headers.forEach((value, key) => res.setHeader(key, value));
+      // Buffer the response so we can cache and send it
+      const arrayBuf = await response.arrayBuffer();
+      const buf = Buffer.from(arrayBuf);
+      setCached(filePath, buf, contentType);
 
-      if (response.body) {
-        const nodeStream = Readable.fromWeb(
-          response.body as ReadableStream<Uint8Array>,
-        );
-        nodeStream.pipe(res);
-      } else {
-        res.end();
-      }
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=300');
+      res.setHeader('X-Cache', 'MISS');
+      res.send(buf);
     } catch (error) {
       req.log.error({ err: error }, 'Error serving public object');
       res.status(500).json({ error: 'Failed to serve public object' });

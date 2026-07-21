@@ -25,56 +25,67 @@ if (newPassword.length < 8) {
   process.exit(1);
 }
 
-// Dynamically load bcryptjs from the workspace
-const bcryptPath = new URL(
-  "../node_modules/.pnpm/bcryptjs@3.0.3/node_modules/bcryptjs/index.js",
-  import.meta.url
-);
-
+// Load bcryptjs
 let bcrypt;
 try {
-  const mod = await import(bcryptPath.href);
-  bcrypt = mod.default ?? mod;
+  bcrypt = require("bcryptjs");
 } catch {
-  console.error("Could not load bcryptjs. Make sure you have run `pnpm install`.");
+  // Try pnpm deep path
+  try {
+    const mod = await import(
+      new URL("../node_modules/.pnpm/bcryptjs@3.0.3/node_modules/bcryptjs/index.js", import.meta.url).href
+    );
+    bcrypt = mod.default ?? mod;
+  } catch (e) {
+    console.error("Could not load bcryptjs:", e.message);
+    process.exit(1);
+  }
+}
+
+// Load pg
+let pg;
+try {
+  pg = require("pg");
+} catch {
+  try {
+    const mod = await import(
+      new URL("../node_modules/.pnpm/pg@8.22.0/node_modules/pg/lib/index.js", import.meta.url).href
+    );
+    pg = mod.default ?? mod;
+  } catch (e) {
+    console.error("Could not load pg:", e.message);
+    process.exit(1);
+  }
+}
+
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL environment variable is not set.");
   process.exit(1);
 }
 
-// Load postgres from the db package
-let db, adminsTable, eq;
-try {
-  const dbMod = await import("../lib/db/src/index.ts").catch(() => null)
-    ?? await import("../lib/db/dist/index.js").catch(() => null);
-  if (!dbMod) throw new Error("db module not found");
-  db = dbMod.db;
-  adminsTable = dbMod.adminsTable;
-
-  const drizzleMod = await import("drizzle-orm");
-  eq = drizzleMod.eq;
-} catch (e) {
-  console.error("Could not load database module:", e.message);
-  console.error("\nFallback: run this SQL directly in your database:\n");
-  const hash = await bcrypt.hash(newPassword, 12);
-  console.error(`UPDATE admins SET password_hash = '${hash}' WHERE username = '${username}';`);
-  process.exit(1);
-}
+const { Pool } = pg;
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 try {
   const hash = await bcrypt.hash(newPassword, 12);
-  const result = await db
-    .update(adminsTable)
-    .set({ passwordHash: hash })
-    .where(eq(adminsTable.username, username))
-    .returning({ username: adminsTable.username });
 
-  if (result.length === 0) {
+  const result = await pool.query(
+    `UPDATE admins SET password_hash = $1 WHERE username = $2 RETURNING username`,
+    [hash, username]
+  );
+
+  if (result.rowCount === 0) {
     console.error(`No admin found with username "${username}".`);
+    await pool.end();
     process.exit(1);
   }
 
   console.log(`✓ Password for "${username}" has been reset successfully.`);
+  await pool.end();
   process.exit(0);
 } catch (e) {
-  console.error("Database error:", e.message);
+  console.error("Error:", e.message);
+  await pool.end();
   process.exit(1);
 }

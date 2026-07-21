@@ -2,13 +2,10 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, adminsTable } from "@workspace/db";
 import { AdminLoginBody } from "@workspace/api-zod";
-import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router: IRouter = Router();
-
-function hashPassword(password: string): string {
-  return crypto.createHash("sha256").update(password + process.env.SESSION_SECRET).digest("hex");
-}
 
 router.post("/admin/login", async (req, res): Promise<void> => {
   const parsed = AdminLoginBody.safeParse(req.body);
@@ -18,7 +15,14 @@ router.post("/admin/login", async (req, res): Promise<void> => {
   }
   const { username, password } = parsed.data;
   const [admin] = await db.select().from(adminsTable).where(eq(adminsTable.username, username));
-  if (!admin || admin.passwordHash !== hashPassword(password)) {
+  if (!admin) {
+    // constant-time comparison even when user not found
+    await bcrypt.compare(password, "$2a$12$invalidhashfortimingprotection0000000000000000000000000");
+    res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+  const valid = await bcrypt.compare(password, admin.passwordHash);
+  if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
@@ -26,7 +30,7 @@ router.post("/admin/login", async (req, res): Promise<void> => {
   res.json({ username: admin.username, isAdmin: true });
 });
 
-router.post("/admin/logout", async (req, res): Promise<void> => {
+router.post("/admin/logout", requireAdmin, async (req, res): Promise<void> => {
   req.session?.destroy(() => {});
   res.json({ ok: true });
 });

@@ -10,6 +10,7 @@ import {
   ListProductsQueryParams,
   GetProductsByCategoryParams,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router: IRouter = Router();
 
@@ -104,7 +105,7 @@ router.get("/products", async (req, res): Promise<void> => {
   res.json({ products: rows.map(formatProduct), total: countRow?.count ?? 0, page, limit });
 });
 
-router.post("/products", async (req, res): Promise<void> => {
+router.post("/products", requireAdmin, async (req, res): Promise<void> => {
   const parsed = CreateProductBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -138,7 +139,7 @@ router.get("/products/:id", async (req, res): Promise<void> => {
   res.json(formatProduct(row));
 });
 
-router.put("/products/:id", async (req, res): Promise<void> => {
+router.put("/products/:id", requireAdmin, async (req, res): Promise<void> => {
   const params = UpdateProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -164,7 +165,7 @@ router.put("/products/:id", async (req, res): Promise<void> => {
   res.json(formatProduct({ ...product, categoryName: cat?.name ?? "" }));
 });
 
-router.delete("/products/:id", async (req, res): Promise<void> => {
+router.delete("/products/:id", requireAdmin, async (req, res): Promise<void> => {
   const params = DeleteProductParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

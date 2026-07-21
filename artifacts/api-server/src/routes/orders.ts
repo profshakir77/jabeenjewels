@@ -8,6 +8,7 @@ import {
   UpdateOrderStatusParams,
   ListOrdersQueryParams,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router: IRouter = Router();
 
@@ -101,7 +102,7 @@ router.get("/orders/:id", async (req, res): Promise<void> => {
   res.json(formatOrder(order));
 });
 
-router.patch("/orders/:id/status", async (req, res): Promise<void> => {
+router.patch("/orders/:id/status", requireAdmin, async (req, res): Promise<void> => {
   const params = UpdateOrderStatusParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

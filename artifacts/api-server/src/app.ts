@@ -31,9 +31,14 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET environment variable is required");
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET ?? "jabeen-jewels-secret",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {

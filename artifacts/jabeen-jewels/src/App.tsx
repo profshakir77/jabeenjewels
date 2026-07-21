@@ -22,6 +22,7 @@ import AdminCategories from './pages/admin/Categories';
 import AdminOrders from './pages/admin/Orders';
 import AdminBanners from './pages/admin/Banners';
 import NotFound from '@/pages/not-found';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,13 +48,13 @@ function Router() {
 
       {/* Admin Routes */}
       <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin" component={Dashboard} />
-      <Route path="/admin/products" component={AdminProducts} />
-      <Route path="/admin/products/new" component={ProductForm} />
-      <Route path="/admin/products/:id/edit" component={ProductForm} />
-      <Route path="/admin/categories" component={AdminCategories} />
-      <Route path="/admin/orders" component={AdminOrders} />
-      <Route path="/admin/banners" component={AdminBanners} />
+      <Route path="/admin" component={() => <ProtectedRoute component={Dashboard} />} />
+      <Route path="/admin/products" component={() => <ProtectedRoute component={AdminProducts} />} />
+      <Route path="/admin/products/new" component={() => <ProtectedRoute component={ProductForm} />} />
+      <Route path="/admin/products/:id/edit" component={() => <ProtectedRoute component={ProductForm} />} />
+      <Route path="/admin/categories" component={() => <ProtectedRoute component={AdminCategories} />} />
+      <Route path="/admin/orders" component={() => <ProtectedRoute component={AdminOrders} />} />
+      <Route path="/admin/banners" component={() => <ProtectedRoute component={AdminBanners} />} />
 
       {/* 404 */}
       <Route component={NotFound} />

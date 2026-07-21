@@ -51,7 +51,7 @@ export interface Product {
   /** @nullable */
   weight?: string | null;
   tags?: string[];
-  colors?: string[];
+  colors?: { name: string; quantity: number }[];
   createdAt?: string;
 }
 
@@ -72,7 +72,7 @@ export interface ProductInput {
   material?: string;
   weight?: string;
   tags?: string[];
-  colors?: string[];
+  colors?: { name: string; quantity: number }[];
 }
 
 export interface ProductList {

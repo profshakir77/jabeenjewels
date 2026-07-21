@@ -650,7 +650,12 @@ components:
         colors:
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: integer
         createdAt:
           type: string
 
@@ -695,7 +700,12 @@ components:
         colors:
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: integer
 
     ProductList:
       type: object

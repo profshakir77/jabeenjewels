@@ -9,12 +9,14 @@ import { formatPKR } from "@/lib/utils";
 import { ShoppingBag, MessageCircle, ChevronRight, Truck, ShieldCheck, Heart, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+type ColorEntry = { name: string; quantity: number };
+
 export default function ProductDetail() {
   const params = useParams();
   const id = parseInt(params.id || "0");
   const { addItem } = useCart();
   const { toast } = useToast();
-  
+
   const [mainImage, setMainImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string>("");
@@ -33,10 +35,9 @@ export default function ProductDetail() {
       if (product.images?.length > 0 && !mainImage) {
         setMainImage(product.images[0]);
       }
-      // Auto-select first color if available
-      const colors = (product as any).colors as string[] | undefined;
-      if (colors && colors.length > 0 && !selectedColor) {
-        setSelectedColor(colors[0]);
+      const colors = normaliseColors((product as any).colors);
+      if (colors.length > 0 && !selectedColor) {
+        setSelectedColor(colors[0].name);
       }
     }
   }, [product]);
@@ -65,14 +66,28 @@ export default function ProductDetail() {
     );
   }
 
-  const productColors = ((product as any).colors as string[] | undefined) ?? [];
+  const productColors = normaliseColors((product as any).colors);
   const priceToUse = product.isOnSale && product.salePrice ? product.salePrice : product.price;
 
-  // Stock quantity capping
-  const maxQty = product.stockQuantity && product.stockQuantity > 0 ? product.stockQuantity : 999;
-  const isLowStock = product.stockQuantity != null && product.stockQuantity > 0 && product.stockQuantity <= 10;
+  // Per-color stock: if a color is selected, use its quantity; otherwise fall back to overall stockQuantity
+  const selectedColorEntry = productColors.find(c => c.name === selectedColor);
+  const colorStock = selectedColorEntry?.quantity ?? null;
+  const effectiveStock = productColors.length > 0
+    ? (colorStock ?? 0)
+    : (product.stockQuantity ?? 999);
+
+  const maxQty = effectiveStock > 0 ? effectiveStock : (productColors.length === 0 ? 999 : 0);
+  const isOutOfColorStock = productColors.length > 0 && effectiveStock === 0;
+  const isLowStock = effectiveStock > 0 && effectiveStock <= 10;
+
+  // Reset quantity when color changes
+  const handleColorSelect = (colorName: string) => {
+    setSelectedColor(colorName);
+    setQuantity(1);
+  };
 
   const handleAddToCart = () => {
+    if (isOutOfColorStock) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -80,7 +95,6 @@ export default function ProductDetail() {
       image: product.images?.[0] || "/placeholder.jpg",
       quantity
     });
-    
     toast({
       title: "Added to Cart",
       description: `${quantity}× ${product.name}${selectedColor ? ` (${selectedColor})` : ""} added to your cart.`,
@@ -93,7 +107,7 @@ export default function ProductDetail() {
     const message = encodeURIComponent(
       `Hi Jabeen Jewels! I would like to order:\n\n*${product.name}*\nPrice: ${formatPKR(priceToUse)}\nQuantity: ${quantity}${colorLine}\nLink: ${window.location.href}\n\nPlease let me know the next steps.`
     );
-    window.open(`https://wa.me/923338479799?text=${message}`, '_blank');
+    window.open(`https://wa.me/923338479799?text=${message}`, "_blank");
   };
 
   return (
@@ -113,23 +127,23 @@ export default function ProductDetail() {
 
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
-          
+
           {/* Images */}
           <div className="space-y-4">
             <div className="aspect-square bg-muted rounded-lg overflow-hidden border border-border">
-              <img 
-                src={mainImage || "/placeholder.jpg"} 
-                alt={product.name} 
+              <img
+                src={mainImage || "/placeholder.jpg"}
+                alt={product.name}
                 className="w-full h-full object-cover object-center"
               />
             </div>
             {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-4">
                 {product.images.map((img, idx) => (
-                  <button 
+                  <button
                     key={idx}
                     onClick={() => setMainImage(img)}
-                    className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${mainImage === img ? 'border-primary' : 'border-transparent hover:border-primary/50'}`}
+                    className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${mainImage === img ? "border-primary" : "border-transparent hover:border-primary/50"}`}
                   >
                     <img src={img} alt={`${product.name} thumbnail`} className="w-full h-full object-cover" />
                   </button>
@@ -144,7 +158,7 @@ export default function ProductDetail() {
               <span className="text-sm font-medium tracking-widest text-muted-foreground uppercase">{product.categoryName}</span>
             </div>
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-foreground mb-4">{product.name}</h1>
-            
+
             <div className="flex items-center gap-4 mb-6">
               {product.isOnSale && product.salePrice ? (
                 <>
@@ -162,23 +176,25 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-6 mb-8">
-              {/* Stock status */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium w-20 shrink-0">Status:</span>
-                {product.inStock ? (
-                  <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                    <ShieldCheck className="w-4 h-4" /> In Stock
-                    {product.stockQuantity != null && product.stockQuantity > 0 && (
-                      <span className="text-muted-foreground font-normal ml-1">({product.stockQuantity} available)</span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-sm text-destructive font-medium">Out of Stock</span>
-                )}
-              </div>
+              {/* Stock status — only shown when no per-color stock */}
+              {productColors.length === 0 && (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium w-20 shrink-0">Status:</span>
+                  {product.inStock ? (
+                    <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4" /> In Stock
+                      {product.stockQuantity != null && product.stockQuantity > 0 && (
+                        <span className="text-muted-foreground font-normal ml-1">({product.stockQuantity} available)</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-destructive font-medium">Out of Stock</span>
+                  )}
+                </div>
+              )}
 
-              {/* Low stock warning */}
-              {isLowStock && product.inStock && (
+              {/* Overall low-stock warning (no colors) */}
+              {productColors.length === 0 && product.inStock && product.stockQuantity != null && product.stockQuantity > 0 && product.stockQuantity <= 10 && (
                 <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span className="text-sm font-medium">Only {product.stockQuantity} left — order soon!</span>
@@ -193,29 +209,71 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Color selector */}
+              {/* Color selector with per-color stock */}
               {productColors.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-medium w-20 shrink-0">Color:</span>
                     <span className="text-sm text-foreground font-medium">{selectedColor}</span>
+                    {selectedColorEntry && (
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        selectedColorEntry.quantity === 0
+                          ? "bg-destructive/10 text-destructive"
+                          : selectedColorEntry.quantity <= 10
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700"
+                      }`}>
+                        {selectedColorEntry.quantity === 0
+                          ? "Out of stock"
+                          : selectedColorEntry.quantity <= 10
+                            ? `Only ${selectedColorEntry.quantity} left`
+                            : `${selectedColorEntry.quantity} in stock`}
+                      </span>
+                    )}
                   </div>
+
                   <div className="flex flex-wrap gap-2 pl-24">
-                    {productColors.map(color => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setSelectedColor(color)}
-                        className={`px-4 py-1.5 text-sm rounded-none border transition-all ${
-                          selectedColor === color
-                            ? "border-primary bg-primary text-primary-foreground font-medium"
-                            : "border-border text-muted-foreground hover:border-primary/60"
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    ))}
+                    {productColors.map(color => {
+                      const outOfStock = color.quantity === 0;
+                      const lowStock = color.quantity > 0 && color.quantity <= 10;
+                      return (
+                        <button
+                          key={color.name}
+                          type="button"
+                          onClick={() => handleColorSelect(color.name)}
+                          disabled={outOfStock}
+                          className={`relative px-4 py-1.5 text-sm rounded-none border transition-all ${
+                            selectedColor === color.name
+                              ? "border-primary bg-primary text-primary-foreground font-medium"
+                              : outOfStock
+                                ? "border-border text-muted-foreground/40 line-through cursor-not-allowed"
+                                : "border-border text-muted-foreground hover:border-primary/60"
+                          }`}
+                        >
+                          {color.name}
+                          {lowStock && !outOfStock && (
+                            <span className="absolute -top-1.5 -right-1.5 w-2 h-2 rounded-full bg-amber-500" title={`Only ${color.quantity} left`} />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {/* Selected color out-of-stock warning */}
+                  {isOutOfColorStock && (
+                    <div className="flex items-center gap-2 text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span className="text-sm font-medium">This color is currently out of stock. Please select another color.</span>
+                    </div>
+                  )}
+
+                  {/* Low stock warning for selected color */}
+                  {isLowStock && !isOutOfColorStock && (
+                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span className="text-sm font-medium">Only {effectiveStock} left in {selectedColor} — order soon!</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -223,16 +281,16 @@ export default function ProductDetail() {
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium w-20 shrink-0">Quantity:</span>
                 <div className="flex items-center border border-border rounded-none h-10 w-32">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-10 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                   >−</button>
                   <span className="flex-1 text-center text-sm font-medium">{quantity}</span>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
-                    disabled={quantity >= maxQty}
+                    disabled={quantity >= maxQty || isOutOfColorStock}
                     className="w-10 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >+</button>
                 </div>
@@ -240,17 +298,18 @@ export default function ProductDetail() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Button 
-                onClick={handleAddToCart} 
-                disabled={!product.inStock}
+              <Button
+                onClick={handleAddToCart}
+                disabled={!product.inStock || isOutOfColorStock}
                 className="flex-1 h-14 rounded-none text-sm tracking-widest uppercase"
               >
                 <ShoppingBag className="mr-2 h-4 w-4" /> Add to Cart
               </Button>
-              <Button 
+              <Button
                 onClick={handleWhatsAppOrder}
+                disabled={isOutOfColorStock}
                 variant="secondary"
-                className="flex-1 h-14 rounded-none text-sm tracking-widest uppercase bg-[#25D366] text-white hover:bg-[#128C7E] hover:text-white"
+                className="flex-1 h-14 rounded-none text-sm tracking-widest uppercase bg-[#25D366] text-white hover:bg-[#128C7E] hover:text-white disabled:opacity-50"
               >
                 <MessageCircle className="mr-2 h-4 w-4" /> Order via WhatsApp
               </Button>
@@ -272,7 +331,6 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -294,5 +352,15 @@ export default function ProductDetail() {
         </section>
       )}
     </CustomerLayout>
+  );
+}
+
+// Normalise: handles both old string[] and new {name,quantity}[] from DB
+function normaliseColors(raw: any): ColorEntry[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((c: any) =>
+    typeof c === "string"
+      ? { name: c, quantity: 0 }
+      : { name: String(c.name ?? ""), quantity: Number(c.quantity ?? 0) }
   );
 }

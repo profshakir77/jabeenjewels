@@ -85,6 +85,22 @@ export function Footer() {
             <span className="text-xs text-muted-foreground font-semibold px-2 py-1 bg-muted rounded">Bank Transfer</span>
           </div>
         </div>
+
+        <div className="mt-4 pt-4 border-t border-border/50 text-center">
+          <p className="text-xs text-muted-foreground">
+            Developed by{" "}
+            <span className="font-semibold text-foreground">Shakir Hussain</span>
+            {" · "}
+            <a
+              href="https://wa.me/923059494585"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-primary transition-colors font-medium"
+            >
+              Call/WhatsApp +92-305-9494585
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -8,14 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, X, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, X, Plus, Package } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
+
+const colorEntrySchema = z.object({
+  name: z.string().min(1, "Color name required"),
+  quantity: z.coerce.number().min(0, "Must be 0 or more"),
+});
 
 const productSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -31,7 +35,7 @@ const productSchema = z.object({
   isNewArrival: z.boolean().default(false),
   isOnSale: z.boolean().default(false),
   material: z.string().optional(),
-  colors: z.array(z.string()).default([]),
+  colors: z.array(colorEntrySchema).default([]),
 });
 
 type ProductValues = z.infer<typeof productSchema>;
@@ -40,11 +44,12 @@ export default function ProductForm() {
   const { id } = useParams();
   const isEditing = !!id && id !== "new";
   const productId = parseInt(id || "0");
-  
+
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [colorInput, setColorInput] = useState("");
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorQty, setNewColorQty] = useState<number>(0);
 
   const { data: categories } = useListCategories();
   const { data: product, isLoading: isProductLoading } = useGetProduct(productId, {
@@ -66,7 +71,7 @@ export default function ProductForm() {
       categoryId: 0,
       images: [],
       inStock: true,
-      stockQuantity: 10,
+      stockQuantity: null,
       isFeatured: false,
       isNewArrival: false,
       isOnSale: false,
@@ -78,6 +83,14 @@ export default function ProductForm() {
   useEffect(() => {
     document.title = isEditing ? "Edit Product | Admin" : "New Product | Admin";
     if (isEditing && product) {
+      const rawColors = (product as any).colors;
+      // normalise: old text[] → [{name, quantity}], already-correct objects pass through
+      const colors: {name: string; quantity: number}[] = Array.isArray(rawColors)
+        ? rawColors.map((c: any) =>
+            typeof c === "string" ? { name: c, quantity: 0 } : { name: c.name ?? "", quantity: c.quantity ?? 0 }
+          )
+        : [];
+
       form.reset({
         ...product,
         images: product.images || [],
@@ -85,14 +98,13 @@ export default function ProductForm() {
         stockQuantity: product.stockQuantity || null,
         description: product.description || "",
         material: product.material || "",
-        colors: (product as any).colors || [],
+        colors,
       });
     }
   }, [isEditing, product, form]);
 
-  const generateSlug = (name: string) => {
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-  };
+  const generateSlug = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
   const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     form.setValue("name", e.target.value);
@@ -102,18 +114,25 @@ export default function ProductForm() {
   };
 
   const addColor = () => {
-    const trimmed = colorInput.trim();
+    const trimmed = newColorName.trim();
     if (!trimmed) return;
     const current = form.getValues("colors") || [];
-    if (!current.includes(trimmed)) {
-      form.setValue("colors", [...current, trimmed]);
+    if (!current.find(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+      form.setValue("colors", [...current, { name: trimmed, quantity: newColorQty }]);
     }
-    setColorInput("");
+    setNewColorName("");
+    setNewColorQty(0);
   };
 
-  const removeColor = (color: string) => {
+  const removeColor = (idx: number) => {
     const current = form.getValues("colors") || [];
-    form.setValue("colors", current.filter(c => c !== color));
+    form.setValue("colors", current.filter((_, i) => i !== idx));
+  };
+
+  const updateColorField = (idx: number, field: "name" | "quantity", value: string | number) => {
+    const current = [...(form.getValues("colors") || [])];
+    current[idx] = { ...current[idx], [field]: value };
+    form.setValue("colors", current);
   };
 
   const onSubmit = (data: ProductValues) => {
@@ -157,7 +176,7 @@ export default function ProductForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Main Info */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-card border border-border p-6 rounded-xl space-y-6">
@@ -263,9 +282,9 @@ export default function ProductForm() {
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="inStock"
                     render={({ field }) => (
@@ -279,16 +298,16 @@ export default function ProductForm() {
                       </FormItem>
                     )}
                   />
-                   <FormField
+                  <FormField
                     control={form.control}
                     name="stockQuantity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Stock Quantity</FormLabel>
+                        <FormLabel>Overall Stock Quantity</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="e.g. 25" {...field} value={field.value || ""} />
+                          <Input type="number" placeholder="e.g. 25" {...field} value={field.value ?? ""} />
                         </FormControl>
-                        <FormDescription>How many units available</FormDescription>
+                        <FormDescription>Used when no per-color stock is set</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -296,49 +315,87 @@ export default function ProductForm() {
                 </div>
               </div>
 
-              {/* Colors & Material */}
-              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
-                <h3 className="font-semibold text-lg">Colors & Material</h3>
+              {/* Colors & Stock */}
+              <div className="bg-card border border-border p-6 rounded-xl space-y-5">
+                <div>
+                  <h3 className="font-semibold text-lg">Color Variants & Stock</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Add each color with its own stock quantity. Customers will see availability per color.</p>
+                </div>
 
-                {/* Color tag input */}
                 <FormField
                   control={form.control}
                   name="colors"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Available Colors</FormLabel>
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="e.g. Gold, Silver, Rose Gold"
-                            value={colorInput}
-                            onChange={e => setColorInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }}
-                          />
-                          <Button type="button" variant="outline" size="icon" onClick={addColor}>
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {field.value && field.value.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {field.value.map(color => (
-                              <Badge key={color} variant="secondary" className="gap-1 pr-1 text-sm">
-                                {color}
-                                <button
-                                  type="button"
-                                  onClick={() => removeColor(color)}
-                                  className="ml-1 rounded-full hover:bg-muted p-0.5"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </Badge>
-                            ))}
+                      {/* Existing color rows */}
+                      {field.value && field.value.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          <div className="grid grid-cols-[1fr_120px_36px] gap-2 px-1">
+                            <span className="text-xs font-medium text-muted-foreground">Color Name</span>
+                            <span className="text-xs font-medium text-muted-foreground">Stock Qty</span>
+                            <span />
                           </div>
-                        )}
-                        {(!field.value || field.value.length === 0) && (
-                          <p className="text-xs text-muted-foreground">Type a color and press Enter or click + to add.</p>
-                        )}
+                          {field.value.map((color, idx) => (
+                            <div key={idx} className="grid grid-cols-[1fr_120px_36px] gap-2 items-center">
+                              <Input
+                                value={color.name}
+                                onChange={e => updateColorField(idx, "name", e.target.value)}
+                                placeholder="e.g. Gold"
+                                className="h-9"
+                              />
+                              <div className="relative">
+                                <Package className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={color.quantity}
+                                  onChange={e => updateColorField(idx, "quantity", parseInt(e.target.value) || 0)}
+                                  className="h-9 pl-7"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                onClick={() => removeColor(idx)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add new color row */}
+                      <div className="grid grid-cols-[1fr_120px_36px] gap-2 items-center pt-2 border-t border-dashed border-border">
+                        <Input
+                          placeholder="New color (e.g. Rose Gold)"
+                          value={newColorName}
+                          onChange={e => setNewColorName(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }}
+                          className="h-9"
+                        />
+                        <div className="relative">
+                          <Package className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            min={0}
+                            placeholder="Qty"
+                            value={newColorQty || ""}
+                            onChange={e => setNewColorQty(parseInt(e.target.value) || 0)}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }}
+                            className="h-9 pl-7"
+                          />
+                        </div>
+                        <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={addColor}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
+                      {(!field.value || field.value.length === 0) && (
+                        <p className="text-xs text-muted-foreground mt-2">Enter a color name and quantity, then press Enter or click +.</p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -429,7 +486,6 @@ export default function ProductForm() {
                   />
                 </div>
               </div>
-
             </div>
           </div>
 

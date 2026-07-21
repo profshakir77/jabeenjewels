@@ -29,5 +29,6 @@ export interface Product {
   /** @nullable */
   weight?: string | null;
   tags?: string[];
+  colors?: string[];
   createdAt?: string;
 }

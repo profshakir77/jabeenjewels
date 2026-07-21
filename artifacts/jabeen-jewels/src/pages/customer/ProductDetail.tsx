@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { formatPKR } from "@/lib/utils";
-import { ShoppingBag, MessageCircle, ChevronRight, Truck, ShieldCheck, Heart } from "lucide-react";
+import { ShoppingBag, MessageCircle, ChevronRight, Truck, ShieldCheck, Heart, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProductDetail() {
@@ -17,6 +17,7 @@ export default function ProductDetail() {
   
   const [mainImage, setMainImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
   const { data: product, isLoading, isError } = useGetProduct(id, {
     query: { enabled: !!id }
@@ -31,6 +32,11 @@ export default function ProductDetail() {
       document.title = `${product.name} | Jabeen Jewels`;
       if (product.images?.length > 0 && !mainImage) {
         setMainImage(product.images[0]);
+      }
+      // Auto-select first color if available
+      const colors = (product as any).colors as string[] | undefined;
+      if (colors && colors.length > 0 && !selectedColor) {
+        setSelectedColor(colors[0]);
       }
     }
   }, [product]);
@@ -59,7 +65,12 @@ export default function ProductDetail() {
     );
   }
 
+  const productColors = ((product as any).colors as string[] | undefined) ?? [];
   const priceToUse = product.isOnSale && product.salePrice ? product.salePrice : product.price;
+
+  // Stock quantity capping
+  const maxQty = product.stockQuantity && product.stockQuantity > 0 ? product.stockQuantity : 999;
+  const isLowStock = product.stockQuantity != null && product.stockQuantity > 0 && product.stockQuantity <= 10;
 
   const handleAddToCart = () => {
     addItem({
@@ -72,13 +83,16 @@ export default function ProductDetail() {
     
     toast({
       title: "Added to Cart",
-      description: `${quantity}x ${product.name} added to your cart.`,
+      description: `${quantity}× ${product.name}${selectedColor ? ` (${selectedColor})` : ""} added to your cart.`,
       duration: 3000,
     });
   };
 
   const handleWhatsAppOrder = () => {
-    const message = encodeURIComponent(`Hi Jabeen Jewels! I would like to order:\n\n*${product.name}*\nPrice: ${formatPKR(priceToUse)}\nQuantity: ${quantity}\nLink: ${window.location.href}\n\nPlease let me know the next steps.`);
+    const colorLine = selectedColor ? `\nColor: ${selectedColor}` : "";
+    const message = encodeURIComponent(
+      `Hi Jabeen Jewels! I would like to order:\n\n*${product.name}*\nPrice: ${formatPKR(priceToUse)}\nQuantity: ${quantity}${colorLine}\nLink: ${window.location.href}\n\nPlease let me know the next steps.`
+    );
     window.open(`https://wa.me/923338479799?text=${message}`, '_blank');
   };
 
@@ -148,35 +162,78 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-6 mb-8">
+              {/* Stock status */}
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium w-20">Status:</span>
+                <span className="text-sm font-medium w-20 shrink-0">Status:</span>
                 {product.inStock ? (
-                  <span className="text-sm text-green-600 font-medium flex items-center"><ShieldCheck className="w-4 h-4 mr-1" /> In Stock</span>
+                  <span className="text-sm text-green-600 font-medium flex items-center gap-1">
+                    <ShieldCheck className="w-4 h-4" /> In Stock
+                    {product.stockQuantity != null && product.stockQuantity > 0 && (
+                      <span className="text-muted-foreground font-normal ml-1">({product.stockQuantity} available)</span>
+                    )}
+                  </span>
                 ) : (
                   <span className="text-sm text-destructive font-medium">Out of Stock</span>
                 )}
               </div>
-              
+
+              {/* Low stock warning */}
+              {isLowStock && product.inStock && (
+                <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span className="text-sm font-medium">Only {product.stockQuantity} left — order soon!</span>
+                </div>
+              )}
+
+              {/* Material */}
               {product.material && (
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium w-20">Material:</span>
+                  <span className="text-sm font-medium w-20 shrink-0">Material:</span>
                   <span className="text-sm text-muted-foreground">{product.material}</span>
                 </div>
               )}
-              
+
+              {/* Color selector */}
+              {productColors.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium w-20 shrink-0">Color:</span>
+                    <span className="text-sm text-foreground font-medium">{selectedColor}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pl-24">
+                    {productColors.map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setSelectedColor(color)}
+                        className={`px-4 py-1.5 text-sm rounded-none border transition-all ${
+                          selectedColor === color
+                            ? "border-primary bg-primary text-primary-foreground font-medium"
+                            : "border-border text-muted-foreground hover:border-primary/60"
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity */}
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium w-20">Quantity:</span>
+                <span className="text-sm font-medium w-20 shrink-0">Quantity:</span>
                 <div className="flex items-center border border-border rounded-none h-10 w-32">
                   <button 
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-10 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
-                  >-</button>
+                  >−</button>
                   <span className="flex-1 text-center text-sm font-medium">{quantity}</span>
                   <button 
                     type="button"
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
+                    onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                    disabled={quantity >= maxQty}
+                    className="w-10 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >+</button>
                 </div>
               </div>

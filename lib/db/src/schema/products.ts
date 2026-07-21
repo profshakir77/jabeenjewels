@@ -21,6 +21,7 @@ export const productsTable = pgTable("products", {
   material: text("material"),
   weight: text("weight"),
   tags: text("tags").array().notNull().default([]),
+  colors: text("colors").array().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

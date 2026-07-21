@@ -140,6 +140,7 @@ export const ListProductsResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })),
   "total": zod.number(),
@@ -166,7 +167,8 @@ export const CreateProductBody = zod.object({
   "isOnSale": zod.boolean().optional(),
   "material": zod.string().optional(),
   "weight": zod.string().optional(),
-  "tags": zod.array(zod.string()).optional()
+  "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional()
 })
 
 export const CreateProductResponse = zod.object({
@@ -187,6 +189,7 @@ export const CreateProductResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 
@@ -216,6 +219,7 @@ export const GetProductResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 
@@ -242,7 +246,8 @@ export const UpdateProductBody = zod.object({
   "isOnSale": zod.boolean().optional(),
   "material": zod.string().optional(),
   "weight": zod.string().optional(),
-  "tags": zod.array(zod.string()).optional()
+  "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional()
 })
 
 export const UpdateProductResponse = zod.object({
@@ -263,6 +268,7 @@ export const UpdateProductResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 
@@ -298,6 +304,7 @@ export const GetFeaturedProductsResponseItem = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 export const GetFeaturedProductsResponse = zod.array(GetFeaturedProductsResponseItem)
@@ -324,6 +331,7 @@ export const GetNewArrivalsResponseItem = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 export const GetNewArrivalsResponse = zod.array(GetNewArrivalsResponseItem)
@@ -350,6 +358,7 @@ export const GetOnSaleProductsResponseItem = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 export const GetOnSaleProductsResponse = zod.array(GetOnSaleProductsResponseItem)
@@ -380,6 +389,7 @@ export const GetProductsByCategoryResponseItem = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })
 export const GetProductsByCategoryResponse = zod.array(GetProductsByCategoryResponseItem)
@@ -634,6 +644,7 @@ export const GetHomepageDataResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })),
   "newArrivals": zod.array(zod.object({
@@ -654,6 +665,7 @@ export const GetHomepageDataResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })),
   "saleProducts": zod.array(zod.object({
@@ -674,6 +686,7 @@ export const GetHomepageDataResponse = zod.object({
   "material": zod.string().nullish(),
   "weight": zod.string().nullish(),
   "tags": zod.array(zod.string()).optional(),
+  "colors": zod.array(zod.string()).optional(),
   "createdAt": zod.string().optional()
 })),
   "categories": zod.array(zod.object({

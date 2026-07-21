@@ -23,4 +23,5 @@ export interface ProductInput {
   material?: string;
   weight?: string;
   tags?: string[];
+  colors?: string[];
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useGetProduct, useCreateProduct, useUpdateProduct, useListCategories, getListProductsQueryKey, getGetProductQueryKey } from "@workspace/api-client-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
@@ -8,11 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, X, Plus } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -30,6 +31,7 @@ const productSchema = z.object({
   isNewArrival: z.boolean().default(false),
   isOnSale: z.boolean().default(false),
   material: z.string().optional(),
+  colors: z.array(z.string()).default([]),
 });
 
 type ProductValues = z.infer<typeof productSchema>;
@@ -42,6 +44,7 @@ export default function ProductForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [colorInput, setColorInput] = useState("");
 
   const { data: categories } = useListCategories();
   const { data: product, isLoading: isProductLoading } = useGetProduct(productId, {
@@ -68,6 +71,7 @@ export default function ProductForm() {
       isNewArrival: false,
       isOnSale: false,
       material: "",
+      colors: [],
     },
   });
 
@@ -81,6 +85,7 @@ export default function ProductForm() {
         stockQuantity: product.stockQuantity || null,
         description: product.description || "",
         material: product.material || "",
+        colors: (product as any).colors || [],
       });
     }
   }, [isEditing, product, form]);
@@ -96,9 +101,24 @@ export default function ProductForm() {
     }
   };
 
+  const addColor = () => {
+    const trimmed = colorInput.trim();
+    if (!trimmed) return;
+    const current = form.getValues("colors") || [];
+    if (!current.includes(trimmed)) {
+      form.setValue("colors", [...current, trimmed]);
+    }
+    setColorInput("");
+  };
+
+  const removeColor = (color: string) => {
+    const current = form.getValues("colors") || [];
+    form.setValue("colors", current.filter(c => c !== color));
+  };
+
   const onSubmit = (data: ProductValues) => {
     if (isEditing) {
-      updateMutation.mutate({ id: productId, data }, {
+      updateMutation.mutate({ id: productId, data: data as any }, {
         onSuccess: () => {
           toast({ title: "Product updated successfully" });
           queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
@@ -108,7 +128,7 @@ export default function ProductForm() {
         onError: () => toast({ title: "Failed to update product", variant: "destructive" })
       });
     } else {
-      createMutation.mutate({ data }, {
+      createMutation.mutate({ data: data as any }, {
         onSuccess: () => {
           toast({ title: "Product created successfully" });
           queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
@@ -211,7 +231,7 @@ export default function ProductForm() {
                 />
               </div>
 
-              {/* Pricing */}
+              {/* Pricing & Inventory */}
               <div className="bg-card border border-border p-6 rounded-xl space-y-6">
                 <h3 className="font-semibold text-lg">Pricing & Inventory</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -264,15 +284,79 @@ export default function ProductForm() {
                     name="stockQuantity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quantity</FormLabel>
+                        <FormLabel>Stock Quantity</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} value={field.value || ""} />
+                          <Input type="number" placeholder="e.g. 25" {...field} value={field.value || ""} />
                         </FormControl>
+                        <FormDescription>How many units available</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              </div>
+
+              {/* Colors & Material */}
+              <div className="bg-card border border-border p-6 rounded-xl space-y-6">
+                <h3 className="font-semibold text-lg">Colors & Material</h3>
+
+                {/* Color tag input */}
+                <FormField
+                  control={form.control}
+                  name="colors"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Available Colors</FormLabel>
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="e.g. Gold, Silver, Rose Gold"
+                            value={colorInput}
+                            onChange={e => setColorInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }}
+                          />
+                          <Button type="button" variant="outline" size="icon" onClick={addColor}>
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {field.value && field.value.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {field.value.map(color => (
+                              <Badge key={color} variant="secondary" className="gap-1 pr-1 text-sm">
+                                {color}
+                                <button
+                                  type="button"
+                                  onClick={() => removeColor(color)}
+                                  className="ml-1 rounded-full hover:bg-muted p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {(!field.value || field.value.length === 0) && (
+                          <p className="text-xs text-muted-foreground">Type a color and press Enter or click + to add.</p>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="material"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Material</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 18K Gold, Sterling Silver" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 

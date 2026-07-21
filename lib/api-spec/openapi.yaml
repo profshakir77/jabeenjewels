@@ -647,6 +647,10 @@ components:
           type: array
           items:
             type: string
+        colors:
+          type: array
+          items:
+            type: string
         createdAt:
           type: string
 
@@ -685,6 +689,10 @@ components:
         weight:
           type: string
         tags:
+          type: array
+          items:
+            type: string
+        colors:
           type: array
           items:
             type: string

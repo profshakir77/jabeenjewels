@@ -4,224 +4,359 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=1200"/>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
 
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    width:1200px;height:628px;overflow:hidden;
-    background:linear-gradient(135deg,#0d0d1a 0%,#1a0a2e 40%,#0d1a2e 100%);
-    font-family:'Inter',sans-serif;
-    position:relative;
-  }
+body{
+  width:1200px;height:628px;overflow:hidden;
+  background:#080812;
+  font-family:'Inter',sans-serif;
+  position:relative;
+}
 
-  /* background decorative elements */
-  .bg-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35;pointer-events:none;}
-  .orb1{width:400px;height:400px;background:radial-gradient(circle,#c084fc,transparent);top:-100px;left:-80px;}
-  .orb2{width:350px;height:350px;background:radial-gradient(circle,#f472b6,transparent);bottom:-80px;right:200px;}
-  .orb3{width:250px;height:250px;background:radial-gradient(circle,#60a5fa,transparent);top:50px;right:80px;}
+/* ── BACKGROUND ── */
+.bg-hero{
+  position:absolute;inset:0;
+  background:url('/ss-hero.jpg') center/cover no-repeat;
+  opacity:.13;
+  filter:blur(2px);
+}
+.bg-gradient{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(135deg,#0d0820 0%,#12082a 35%,#080d20 65%,#0d0a18 100%);
+  opacity:.92;
+}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
+.orb1{width:500px;height:500px;top:-160px;left:-80px;background:radial-gradient(circle,rgba(192,84,252,.28),transparent);}
+.orb2{width:420px;height:420px;bottom:-140px;right:80px;background:radial-gradient(circle,rgba(244,72,182,.22),transparent);}
+.orb3{width:300px;height:300px;top:20px;right:420px;background:radial-gradient(circle,rgba(96,165,250,.15),transparent);}
+.grid-lines{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:36px 36px;
+}
 
-  /* grid lines */
-  .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;}
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:10;display:flex;flex-direction:column;height:100%;padding:0;}
 
-  .card{position:relative;z-index:10;display:flex;height:100%;padding:32px 36px;gap:32px;align-items:center;}
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px;
+  background:rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  flex-shrink:0;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-logo{width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2);object-fit:cover;}
+.brand-name{font-family:'Playfair Display',serif;font-size:15px;color:#fff;letter-spacing:.3px;}
+.brand-url{font-size:10px;color:#a78bfa;letter-spacing:1.4px;text-transform:uppercase;}
+.dev-pill{
+  display:flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,rgba(244,72,182,.15),rgba(192,84,252,.15));
+  border:1px solid rgba(244,72,182,.3);
+  border-radius:100px;padding:5px 14px;
+}
+.dev-av{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#c084fc);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;}
+.dev-label{font-size:11.5px;font-weight:600;color:#f0e6ff;}
+.dev-label strong{color:#fff;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.live-text{font-size:10px;color:#86efac;font-weight:600;letter-spacing:.5px;}
 
-  /* ── LEFT COLUMN ── */
-  .left{flex:0 0 460px;display:flex;flex-direction:column;gap:20px;}
+/* MAIN BODY */
+.body{display:flex;flex:1;gap:0;overflow:hidden;}
 
-  .brand-row{display:flex;align-items:center;gap:12px;}
-  .brand-logo{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.2);object-fit:cover;}
-  .brand-name{font-family:'Playfair Display',serif;font-size:22px;color:#fff;letter-spacing:.3px;}
-  .brand-url{font-size:12px;color:#a78bfa;letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+/* LEFT PANEL */
+.left{
+  width:285px;flex-shrink:0;
+  padding:14px 18px 12px 24px;
+  display:flex;flex-direction:column;gap:10px;
+  border-right:1px solid rgba(255,255,255,.06);
+}
+.headline{font-size:21px;font-weight:900;line-height:1.2;color:#fff;letter-spacing:-.4px;}
+.headline em{font-style:normal;background:linear-gradient(90deg,#f472b6,#c084fc,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 
-  .headline{font-size:28px;font-weight:800;line-height:1.25;color:#fff;letter-spacing:-.3px;}
-  .headline span{background:linear-gradient(90deg,#f472b6,#c084fc,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.seo-section-label{font-size:9px;font-weight:700;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;}
 
-  .dev-badge{
-    display:inline-flex;align-items:center;gap:8px;
-    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
-    border-radius:100px;padding:8px 16px;width:fit-content;
-  }
-  .dev-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#c084fc);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
-  .dev-text{font-size:13px;color:#e2e8f0;font-weight:500;}
-  .dev-text strong{color:#fff;}
+/* SEO hashtag cloud */
+.seo-tags{display:flex;flex-wrap:wrap;gap:4px;}
+.stag{font-size:9.5px;font-weight:600;padding:3px 8px;border-radius:100px;border:1px solid;white-space:nowrap;}
+.s1{color:#60a5fa;border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08);}
+.s2{color:#f472b6;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.08);}
+.s3{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08);}
+.s4{color:#fbbf24;border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.07);}
+.s5{color:#c084fc;border-color:rgba(192,132,252,.3);background:rgba(192,132,252,.08);}
+.s6{color:#38bdf8;border-color:rgba(56,189,248,.3);background:rgba(56,189,248,.08);}
+.s7{color:#fb923c;border-color:rgba(251,146,60,.25);background:rgba(251,146,60,.07);}
+.s8{color:#a78bfa;border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.08);}
 
-  /* tech stack */
-  .stack-label{font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:1.2px;text-transform:uppercase;}
-  .tech-grid{display:flex;flex-wrap:wrap;gap:7px;}
-  .tech-pill{
-    display:flex;align-items:center;gap:5px;
-    padding:5px 11px;border-radius:100px;font-size:11.5px;font-weight:600;
-    border:1px solid;white-space:nowrap;
-  }
-  .tech-pill .dot{width:6px;height:6px;border-radius:50%;}
+/* features */
+.feats{display:flex;flex-direction:column;gap:5px;}
+.feat{display:flex;align-items:flex-start;gap:6px;font-size:10.5px;color:#cbd5e1;line-height:1.35;}
+.ficon{color:#f472b6;font-size:9px;flex-shrink:0;margin-top:2px;}
 
-  /* colours per tech */
-  .react   {background:rgba(97,218,251,.12);border-color:rgba(97,218,251,.35);color:#61dafb;}
-  .ts      {background:rgba(49,120,198,.15);border-color:rgba(49,120,198,.4);color:#60a5fa;}
-  .node    {background:rgba(104,160,99,.12);border-color:rgba(104,160,99,.4);color:#86efac;}
-  .express {background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#e2e8f0;}
-  .pg      {background:rgba(51,103,145,.15);border-color:rgba(51,103,145,.4);color:#7dd3fc;}
-  .drizzle {background:rgba(196,181,253,.1);border-color:rgba(196,181,253,.3);color:#c4b5fd;}
-  .tw      {background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.3);color:#38bdf8;}
-  .vite    {background:rgba(189,52,254,.1);border-color:rgba(189,52,254,.3);color:#d8b4fe;}
-  .zod     {background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.3);color:#f9a8d4;}
-  .query   {background:rgba(255,165,0,.1);border-color:rgba(255,165,0,.25);color:#fbbf24;}
-  .oapi    {background:rgba(100,200,100,.1);border-color:rgba(100,200,100,.25);color:#86efac;}
-  .resend  {background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.2);color:#cbd5e1;}
-  .gcs     {background:rgba(234,179,8,.1);border-color:rgba(234,179,8,.25);color:#fde047;}
-  .pnpm    {background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.25);color:#fb923c;}
+/* stats row */
+.stats{display:flex;gap:8px;}
+.stat{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;text-align:center;}
+.stat-num{font-size:15px;font-weight:800;color:#fff;line-height:1;}
+.stat-lbl{font-size:8.5px;color:#94a3b8;margin-top:2px;line-height:1.2;}
 
-  /* features */
-  .features{display:flex;flex-direction:column;gap:6px;}
-  .feat{display:flex;align-items:center;gap:7px;font-size:12px;color:#cbd5e1;}
-  .feat::before{content:'✦';color:#f472b6;font-size:9px;flex-shrink:0;}
+/* TECH STRIP */
+.tech-strip{
+  display:flex;gap:5px;flex-wrap:wrap;
+  padding:8px 10px;
+  background:rgba(255,255,255,.03);
+  border-top:1px solid rgba(255,255,255,.06);
+  flex-shrink:0;
+}
+.tp{font-size:9px;font-weight:700;padding:3px 9px;border-radius:100px;border:1px solid;white-space:nowrap;display:flex;align-items:center;gap:4px;}
+.tp .d{width:5px;height:5px;border-radius:50%;}
+.react  {color:#61dafb;border-color:rgba(97,218,251,.3);background:rgba(97,218,251,.07);}
+.ts     {color:#60a5fa;border-color:rgba(49,120,198,.35);background:rgba(49,120,198,.08);}
+.node   {color:#86efac;border-color:rgba(104,160,99,.35);background:rgba(104,160,99,.08);}
+.express{color:#d1d5db;border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04);}
+.pg     {color:#7dd3fc;border-color:rgba(51,103,145,.35);background:rgba(51,103,145,.08);}
+.drizzle{color:#c4b5fd;border-color:rgba(196,181,253,.3);background:rgba(196,181,253,.07);}
+.tw     {color:#38bdf8;border-color:rgba(56,189,248,.3);background:rgba(56,189,248,.07);}
+.vite   {color:#d8b4fe;border-color:rgba(189,52,254,.3);background:rgba(189,52,254,.07);}
+.zod    {color:#f9a8d4;border-color:rgba(244,114,182,.3);background:rgba(244,114,182,.07);}
+.tanstack{color:#fbbf24;border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.06);}
+.oapi   {color:#86efac;border-color:rgba(100,200,100,.25);background:rgba(100,200,100,.06);}
+.resend {color:#d1d5db;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.04);}
+.gcs    {color:#fde047;border-color:rgba(234,179,8,.25);background:rgba(234,179,8,.06);}
+.pnpm   {color:#fb923c;border-color:rgba(251,146,60,.25);background:rgba(251,146,60,.06);}
 
-  /* ── RIGHT COLUMN ── */
-  .right{flex:1;position:relative;height:100%;display:flex;align-items:center;justify-content:center;}
+/* MOCKUP ZONE */
+.mockups{flex:1;position:relative;overflow:hidden;padding:10px 10px 0 10px;}
 
-  /* desktop mockup */
-  .desktop-frame{
-    position:absolute;top:18px;left:0px;
-    width:360px;
-    background:#1e1e2e;border-radius:10px;
-    box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.1);
-    overflow:hidden;
-  }
-  .desktop-bar{height:24px;background:#2a2a3e;display:flex;align-items:center;padding:0 10px;gap:5px;}
-  .dot-r{width:8px;height:8px;border-radius:50%;background:#ff5f57;}
-  .dot-y{width:8px;height:8px;border-radius:50%;background:#ffbd2e;}
-  .dot-g{width:8px;height:8px;border-radius:50%;background:#28ca41;}
-  .desktop-url{flex:1;margin:0 8px;background:#1a1a2e;border-radius:4px;height:13px;display:flex;align-items:center;padding:0 6px;}
-  .desktop-url span{font-size:8px;color:#94a3b8;letter-spacing:.3px;}
-  .desktop-screen img{width:100%;display:block;}
+/* Desktop browser mockup */
+.desk{
+  position:absolute;
+  top:10px;left:10px;
+  width:430px;
+  background:#1a1a2e;border-radius:9px;
+  box-shadow:0 24px 64px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.1);
+  overflow:hidden;
+}
+.desk-bar{height:22px;background:#252538;display:flex;align-items:center;padding:0 8px;gap:5px;flex-shrink:0;}
+.dbt{width:7px;height:7px;border-radius:50%;}
+.db-addr{flex:1;margin:0 7px;background:#1a1a2e;border-radius:3px;height:12px;display:flex;align-items:center;padding:0 6px;}
+.db-addr span{font-size:7px;color:#6b7280;letter-spacing:.2px;}
+.desk-screen img{width:100%;display:block;height:220px;object-fit:cover;object-position:top;}
 
-  /* mobile mockup */
-  .mobile-frame{
-    position:absolute;bottom:14px;right:-10px;
-    width:142px;
-    background:#1e1e2e;border-radius:20px;
-    box-shadow:0 20px 50px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12);
-    overflow:hidden;
-    border:3px solid #2a2a3e;
-  }
-  .mobile-notch{height:16px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;}
-  .notch-pill{width:36px;height:6px;background:#2a2a3e;border-radius:10px;}
-  .mobile-screen img{width:100%;display:block;}
-  .mobile-home{height:8px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;}
-  .home-bar{width:40px;height:3px;background:#3a3a4e;border-radius:10px;}
+/* Product detail desktop */
+.desk2{
+  position:absolute;
+  bottom:0px;left:10px;
+  width:430px;
+  background:#1a1a2e;border-radius:9px 9px 0 0;
+  box-shadow:0 -10px 40px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08);
+  overflow:hidden;
+  height:180px;
+}
+.desk2-bar{height:22px;background:#252538;display:flex;align-items:center;padding:0 8px;gap:5px;}
+.desk2-screen img{width:100%;height:158px;object-fit:cover;object-position:top;}
 
-  /* floating tags */
-  .float-tag{
-    position:absolute;
-    background:rgba(15,15,26,.85);
-    backdrop-filter:blur(12px);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:10px;
-    padding:7px 12px;
-    font-size:11px;
-    font-weight:600;
-    color:#fff;
-    box-shadow:0 8px 24px rgba(0,0,0,.4);
-    white-space:nowrap;
-  }
-  .tag-responsive{top:22px;right:2px;color:#86efac;border-color:rgba(134,239,172,.25);}
-  .tag-responsive::before{content:'✓ ';color:#4ade80;}
-  .tag-fullstack{top:90px;right:4px;color:#f9a8d4;border-color:rgba(249,168,212,.25);}
-  .tag-pwa{bottom:80px;left:10px;color:#fbbf24;border-color:rgba(251,191,36,.25);}
+/* Phone mockups */
+.phone{
+  position:absolute;
+  background:#1c1c2e;
+  border-radius:20px;
+  border:2.5px solid #2a2a40;
+  box-shadow:0 20px 50px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.ph-notch{height:14px;background:#141420;display:flex;align-items:center;justify-content:center;}
+.ph-pill{width:32px;height:5px;background:#2a2a40;border-radius:10px;}
+.ph-screen img{width:100%;display:block;object-fit:cover;}
+.ph-home{height:8px;background:#141420;display:flex;align-items:center;justify-content:center;}
+.ph-bar{width:36px;height:3px;background:#2a2a40;border-radius:10px;}
 
-  /* divider */
-  .vdivider{width:1px;height:80%;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.1),transparent);align-self:center;flex-shrink:0;}
+.phone1{right:6px;top:8px;width:128px;}
+.phone1 .ph-screen img{height:210px;object-position:top;}
+
+.phone2{right:148px;top:55px;width:118px;}
+.phone2 .ph-screen img{height:195px;object-position:top;}
+
+.phone3{right:10px;bottom:0px;width:120px;border-radius:16px 16px 0 0;}
+.phone3 .ph-screen img{height:170px;object-position:top;}
+
+/* floating badges */
+.fbadge{
+  position:absolute;
+  background:rgba(10,10,20,.88);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  padding:6px 12px;
+  font-size:10px;font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+  white-space:nowrap;
+  display:flex;align-items:center;gap:5px;
+}
+.fb1{bottom:42px;left:140px;color:#4ade80;border-color:rgba(74,222,128,.25);}
+.fb2{top:8px;right:275px;color:#f9a8d4;border-color:rgba(249,168,212,.25);}
+.fb3{top:56px;right:275px;color:#fbbf24;border-color:rgba(251,191,36,.2);}
+.fb4{bottom:42px;right:278px;color:#60a5fa;border-color:rgba(96,165,250,.25);}
 </style>
 </head>
 <body>
+<div class="bg-hero"></div>
+<div class="bg-gradient"></div>
 <div class="bg-orb orb1"></div>
 <div class="bg-orb orb2"></div>
 <div class="bg-orb orb3"></div>
-<div class="grid"></div>
+<div class="grid-lines"></div>
 
-<div class="card">
-  <!-- LEFT -->
-  <div class="left">
+<div class="wrap">
 
-    <div class="brand-row">
-      <img class="brand-logo" src="/logo.png" alt="Jabeen Jewels"/>
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="/logo.png" alt="logo"/>
       <div>
         <div class="brand-name">Jabeen Jewels</div>
         <div class="brand-url">jabeenjewels.pk</div>
       </div>
     </div>
-
-    <div class="headline">
-      Full-Stack<br/>
-      <span>E-Commerce Platform</span><br/>
-      Built from Scratch
+    <div class="dev-pill">
+      <div class="dev-av">SH</div>
+      <div class="dev-label">Developed by <strong>Shakir Hussain</strong></div>
     </div>
-
-    <div class="dev-badge">
-      <div class="dev-avatar">SH</div>
-      <div class="dev-text">Developed by <strong>Shakir Hussain</strong></div>
+    <div class="topbar-right">
+      <div class="live-dot"></div>
+      <div class="live-text">LIVE &amp; DEPLOYED</div>
     </div>
-
-    <div>
-      <div class="stack-label" style="margin-bottom:10px;">Tech Stack</div>
-      <div class="tech-grid">
-        <div class="tech-pill react"><div class="dot" style="background:#61dafb"></div>React 18</div>
-        <div class="tech-pill ts"><div class="dot" style="background:#3178c6"></div>TypeScript</div>
-        <div class="tech-pill node"><div class="dot" style="background:#68a063"></div>Node.js</div>
-        <div class="tech-pill express"><div class="dot" style="background:#aaa"></div>Express 5</div>
-        <div class="tech-pill pg"><div class="dot" style="background:#336791"></div>PostgreSQL</div>
-        <div class="tech-pill drizzle"><div class="dot" style="background:#c4b5fd"></div>Drizzle ORM</div>
-        <div class="tech-pill tw"><div class="dot" style="background:#38bdf8"></div>Tailwind CSS</div>
-        <div class="tech-pill vite"><div class="dot" style="background:#bd34fe"></div>Vite</div>
-        <div class="tech-pill zod"><div class="dot" style="background:#f472b6"></div>Zod</div>
-        <div class="tech-pill query"><div class="dot" style="background:#fbbf24"></div>TanStack Query</div>
-        <div class="tech-pill oapi"><div class="dot" style="background:#86efac"></div>OpenAPI + Orval</div>
-        <div class="tech-pill resend"><div class="dot" style="background:#aaa"></div>Resend</div>
-        <div class="tech-pill gcs"><div class="dot" style="background:#fde047"></div>Cloud Storage</div>
-        <div class="tech-pill pnpm"><div class="dot" style="background:#fb923c"></div>pnpm Monorepo</div>
-      </div>
-    </div>
-
-    <div class="features">
-      <div class="feat">Full-stack monorepo · API-first OpenAPI design</div>
-      <div class="feat">Session auth · OTP password recovery via email</div>
-      <div class="feat">Admin dashboard · image uploads · banner management</div>
-      <div class="feat">WhatsApp ordering · color variants · stock tracking</div>
-    </div>
-
   </div>
 
-  <div class="vdivider"></div>
+  <!-- MAIN -->
+  <div class="body">
 
-  <!-- RIGHT -->
-  <div class="right">
+    <!-- LEFT PANEL -->
+    <div class="left">
 
-    <!-- desktop mockup -->
-    <div class="desktop-frame">
-      <div class="desktop-bar">
-        <div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div>
-        <div class="desktop-url"><span>jabeenjewels.pk</span></div>
+      <div class="headline">
+        Full-Stack<br/>
+        <em>E-Commerce</em><br/>
+        Platform
       </div>
-      <div class="desktop-screen">
-        <img src="/jabeen-desktop-ss.jpg" alt="Desktop view"/>
+
+      <div>
+        <div class="seo-section-label" style="margin-bottom:6px;">SEO Keywords</div>
+        <div class="seo-tags">
+          <span class="stag s1">#FullStackDev</span>
+          <span class="stag s2">#ReactJS</span>
+          <span class="stag s3">#NodeJS</span>
+          <span class="stag s5">#TypeScript</span>
+          <span class="stag s4">#ECommerce</span>
+          <span class="stag s6">#WebDevelopment</span>
+          <span class="stag s7">#PostgreSQL</span>
+          <span class="stag s8">#OpenAPI</span>
+          <span class="stag s3">#TailwindCSS</span>
+          <span class="stag s2">#DrizzleORM</span>
+          <span class="stag s1">#PakistanTech</span>
+          <span class="stag s4">#APIDesign</span>
+          <span class="stag s5">#MonorepoArch</span>
+          <span class="stag s6">#BuildInPublic</span>
+          <span class="stag s7">#SoftwareEngg</span>
+        </div>
       </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-num">14</div><div class="stat-lbl">Technologies</div></div>
+        <div class="stat"><div class="stat-num">13</div><div class="stat-lbl">Products</div></div>
+        <div class="stat"><div class="stat-num">7</div><div class="stat-lbl">Categories</div></div>
+      </div>
+
+      <div>
+        <div class="seo-section-label" style="margin-bottom:6px;">Features Shipped</div>
+        <div class="feats">
+          <div class="feat"><span class="ficon">✦</span>Custom admin dashboard with image uploads</div>
+          <div class="feat"><span class="ficon">✦</span>Session auth + OTP email password recovery</div>
+          <div class="feat"><span class="ficon">✦</span>OpenAPI spec-first · auto-generated typed hooks</div>
+          <div class="feat"><span class="ficon">✦</span>WhatsApp ordering · color variants · stock tracking</div>
+          <div class="feat"><span class="ficon">✦</span>Cloud storage · auto-advancing hero carousel</div>
+          <div class="feat"><span class="ficon">✦</span>Fully responsive · mobile-first design</div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- mobile mockup -->
-    <div class="mobile-frame">
-      <div class="mobile-notch"><div class="notch-pill"></div></div>
-      <div class="mobile-screen">
-        <img src="/jabeen-mobile-ss.jpg" alt="Mobile view"/>
+    <!-- MOCKUP ZONE -->
+    <div class="mockups">
+
+      <!-- Large desktop hero mockup -->
+      <div class="desk">
+        <div class="desk-bar">
+          <div class="dbt" style="background:#ff5f57"></div>
+          <div class="dbt" style="background:#ffbd2e"></div>
+          <div class="dbt" style="background:#28ca41"></div>
+          <div class="db-addr"><span>jabeenjewels.pk</span></div>
+        </div>
+        <div class="desk-screen"><img src="/ss-hero.jpg" alt="Homepage hero"/></div>
       </div>
-      <div class="mobile-home"><div class="home-bar"></div></div>
+
+      <!-- Product detail desktop (bottom peek) -->
+      <div class="desk2">
+        <div class="desk2-bar">
+          <div class="dbt" style="background:#ff5f57"></div>
+          <div class="dbt" style="background:#ffbd2e"></div>
+          <div class="dbt" style="background:#28ca41"></div>
+          <div class="db-addr"><span>jabeenjewels.pk/product/rose-gold-teardrop-pendant</span></div>
+        </div>
+        <div class="desk2-screen"><img src="/ss-product-desktop.jpg" alt="Product page"/></div>
+      </div>
+
+      <!-- Phone 1 – AI product detail -->
+      <div class="phone phone1">
+        <div class="ph-notch"><div class="ph-pill"></div></div>
+        <div class="ph-screen"><img src="/ss-product-ai.jpg" alt="Product mobile"/></div>
+        <div class="ph-home"><div class="ph-bar"></div></div>
+      </div>
+
+      <!-- Phone 2 – Shop collection -->
+      <div class="phone phone2">
+        <div class="ph-notch"><div class="ph-pill"></div></div>
+        <div class="ph-screen"><img src="/ss-shop-mobile.jpg" alt="Shop mobile"/></div>
+        <div class="ph-home"><div class="ph-bar"></div></div>
+      </div>
+
+      <!-- Phone 3 – Product detail real (bottom peek) -->
+      <div class="phone phone3">
+        <div class="ph-notch"><div class="ph-pill"></div></div>
+        <div class="ph-screen"><img src="/ss-product-mobile.jpg" alt="Product detail mobile"/></div>
+      </div>
+
+      <!-- Floating badges -->
+      <div class="fbadge fb1">✓ Fully Responsive</div>
+      <div class="fbadge fb2">⚡ Full-Stack</div>
+      <div class="fbadge fb3">🛒 E-Commerce</div>
+      <div class="fbadge fb4">🔒 Session Auth</div>
+
     </div>
-
-    <!-- floating tags -->
-    <div class="float-tag tag-responsive">Fully Responsive</div>
-    <div class="float-tag tag-fullstack">⚡ Full-Stack</div>
-    <div class="float-tag tag-pwa">🛒 E-Commerce</div>
-
   </div>
+
+  <!-- TECH STRIP -->
+  <div class="tech-strip">
+    <div class="tp react"><div class="d" style="background:#61dafb"></div>React 18</div>
+    <div class="tp ts"><div class="d" style="background:#3178c6"></div>TypeScript</div>
+    <div class="tp node"><div class="d" style="background:#68a063"></div>Node.js</div>
+    <div class="tp express"><div class="d" style="background:#aaa"></div>Express 5</div>
+    <div class="tp pg"><div class="d" style="background:#336791"></div>PostgreSQL</div>
+    <div class="tp drizzle"><div class="d" style="background:#c4b5fd"></div>Drizzle ORM</div>
+    <div class="tp tw"><div class="d" style="background:#38bdf8"></div>Tailwind CSS</div>
+    <div class="tp vite"><div class="d" style="background:#bd34fe"></div>Vite</div>
+    <div class="tp zod"><div class="d" style="background:#f472b6"></div>Zod</div>
+    <div class="tp tanstack"><div class="d" style="background:#fbbf24"></div>TanStack Query</div>
+    <div class="tp oapi"><div class="d" style="background:#86efac"></div>OpenAPI + Orval</div>
+    <div class="tp resend"><div class="d" style="background:#aaa"></div>Resend</div>
+    <div class="tp gcs"><div class="d" style="background:#fde047"></div>Cloud Storage</div>
+    <div class="tp pnpm"><div class="d" style="background:#fb923c"></div>pnpm Monorepo</div>
+  </div>
+
 </div>
 </body>
 </html>

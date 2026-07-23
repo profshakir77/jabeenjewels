@@ -45,10 +45,15 @@ if (!sessionSecret) {
 
 // Use PostgreSQL session store in production (serverless-safe), MemoryStore in dev
 const PgSession = connectPg(session);
-const sessionStore =
-  process.env.NODE_ENV === "production"
-    ? new PgSession({ pool, createTableIfMissing: true, tableName: "sessions" })
-    : undefined;
+let sessionStore: InstanceType<ReturnType<typeof connectPg>> | undefined;
+if (process.env.NODE_ENV === "production") {
+  try {
+    sessionStore = new PgSession({ pool, createTableIfMissing: true, tableName: "sessions" });
+  } catch (err) {
+    console.error("Failed to initialise PG session store — falling back to MemoryStore:", err);
+    sessionStore = undefined;
+  }
+}
 
 app.use(
   session({

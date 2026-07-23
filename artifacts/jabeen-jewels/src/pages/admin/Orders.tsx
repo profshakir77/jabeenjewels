@@ -92,12 +92,12 @@ export default function AdminOrders() {
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center">Loading orders...</TableCell>
                 </TableRow>
-              ) : ordersData?.orders.length === 0 ? (
+              ) : (ordersData?.length ?? 0) === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No orders found.</TableCell>
                 </TableRow>
               ) : (
-                ordersData?.orders.map((order) => (
+                ordersData?.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">#{order.id}</TableCell>
                     <TableCell>

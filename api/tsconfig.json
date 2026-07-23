@@ -2,7 +2,9 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "../dist/api",
-    "types": ["node"]
+    "types": ["node"],
+    "noEmitOnError": false,
+    "skipLibCheck": true
   },
   "include": ["*.ts"]
 }

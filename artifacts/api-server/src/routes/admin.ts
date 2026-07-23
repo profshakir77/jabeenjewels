@@ -264,4 +264,63 @@ router.post("/admin/reset-password", async (req, res): Promise<void> => {
   res.json({ ok: true });
 });
 
+// ─── User Management ──────────────────────────────────────────────────────────
+
+// List all admin users
+router.get("/admin/users", requireAdmin, async (req, res): Promise<void> => {
+  const users = await db
+    .select({ id: adminsTable.id, username: adminsTable.username, email: adminsTable.email, createdAt: adminsTable.createdAt })
+    .from(adminsTable)
+    .orderBy(adminsTable.createdAt);
+  res.json(users);
+});
+
+// Create a new admin user
+router.post("/admin/users", requireAdmin, async (req, res): Promise<void> => {
+  const { username, password } = req.body ?? {};
+  if (!username || !password) {
+    res.status(400).json({ error: "username and password are required" });
+    return;
+  }
+  if (typeof username !== "string" || username.trim().length < 3) {
+    res.status(400).json({ error: "Username must be at least 3 characters" });
+    return;
+  }
+  if (typeof password !== "string" || password.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+  const existing = await db.select({ id: adminsTable.id }).from(adminsTable).where(eq(adminsTable.username, username.trim()));
+  if (existing.length > 0) {
+    res.status(409).json({ error: "Username already exists" });
+    return;
+  }
+  const passwordHash = await bcrypt.hash(password, 12);
+  const [created] = await db.insert(adminsTable).values({ username: username.trim(), passwordHash }).returning({
+    id: adminsTable.id, username: adminsTable.username, email: adminsTable.email, createdAt: adminsTable.createdAt
+  });
+  res.status(201).json(created);
+});
+
+// Delete an admin user (cannot delete yourself)
+router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> => {
+  const targetId = parseInt(req.params.id);
+  if (isNaN(targetId)) {
+    res.status(400).json({ error: "Invalid user id" });
+    return;
+  }
+  const currentUsername = (req.session as any).admin.username;
+  const [current] = await db.select({ id: adminsTable.id }).from(adminsTable).where(eq(adminsTable.username, currentUsername));
+  if (current?.id === targetId) {
+    res.status(400).json({ error: "You cannot delete your own account" });
+    return;
+  }
+  const [deleted] = await db.delete(adminsTable).where(eq(adminsTable.id, targetId)).returning({ id: adminsTable.id });
+  if (!deleted) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
 export default router;

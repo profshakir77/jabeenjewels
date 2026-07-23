@@ -22,6 +22,7 @@ import ProductForm from './pages/admin/ProductForm';
 import AdminCategories from './pages/admin/Categories';
 import AdminOrders from './pages/admin/Orders';
 import AdminBanners from './pages/admin/Banners';
+import AdminUsers from './pages/admin/Users';
 import NotFound from '@/pages/not-found';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 
@@ -57,6 +58,7 @@ function Router() {
       <Route path="/admin/orders" component={() => <ProtectedRoute component={AdminOrders} />} />
       <Route path="/admin/banners" component={() => <ProtectedRoute component={AdminBanners} />} />
       <Route path="/admin/change-password" component={() => <ProtectedRoute component={ChangePassword} />} />
+      <Route path="/admin/users" component={() => <ProtectedRoute component={AdminUsers} />} />
 
       {/* 404 */}
       <Route component={NotFound} />

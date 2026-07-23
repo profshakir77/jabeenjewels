@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAdminLogout, getGetAdminMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, ShoppingBag, FolderTree, Package, Image as ImageIcon, LogOut, KeyRound } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, FolderTree, Package, Image as ImageIcon, LogOut, KeyRound, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +27,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     { label: "Products", href: "/admin/products", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: FolderTree },
     { label: "Banners", href: "/admin/banners", icon: ImageIcon },
+    { label: "Users", href: "/admin/users", icon: Users },
     { label: "Change Password", href: "/admin/change-password", icon: KeyRound },
   ];
 

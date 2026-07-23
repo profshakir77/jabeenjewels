@@ -242,18 +242,30 @@ export default function ProductDetail() {
                           type="button"
                           onClick={() => handleColorSelect(color.name)}
                           disabled={outOfStock}
-                          className={`relative px-4 py-1.5 text-sm rounded-none border transition-all ${
+                          className={`relative flex flex-col items-center px-4 py-2 text-sm rounded-none border transition-all ${
                             selectedColor === color.name
                               ? "border-primary bg-primary text-primary-foreground font-medium"
                               : outOfStock
-                                ? "border-border text-muted-foreground/40 line-through cursor-not-allowed"
+                                ? "border-border text-muted-foreground/40 cursor-not-allowed"
                                 : "border-border text-muted-foreground hover:border-primary/60"
                           }`}
                         >
-                          {color.name}
-                          {lowStock && !outOfStock && (
-                            <span className="absolute -top-1.5 -right-1.5 w-2 h-2 rounded-full bg-amber-500" title={`Only ${color.quantity} left`} />
-                          )}
+                          <span className={outOfStock ? "line-through" : ""}>{color.name}</span>
+                          <span className={`text-[10px] mt-0.5 font-normal ${
+                            selectedColor === color.name
+                              ? "text-primary-foreground/80"
+                              : outOfStock
+                                ? "text-muted-foreground/40"
+                                : lowStock
+                                  ? "text-amber-600 font-semibold"
+                                  : "text-muted-foreground/70"
+                          }`}>
+                            {outOfStock
+                              ? "Out of stock"
+                              : lowStock
+                                ? `Only ${color.quantity} left`
+                                : `${color.quantity} in stock`}
+                          </span>
                         </button>
                       );
                     })}

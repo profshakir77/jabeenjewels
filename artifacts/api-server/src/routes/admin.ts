@@ -145,32 +145,59 @@ router.post("/admin/forgot-password", async (req, res): Promise<void> => {
     expiresAt,
   });
 
-  // Send email via Resend
+  // Send email via Resend — try direct API key first, fall back to Replit connector
   try {
-    const connectors = new ReplitConnectors();
-    const emailRes = await connectors.proxy("resend", "/emails", {
-      method: "POST",
-      body: JSON.stringify({
-        from: "Jabeen Jewels Admin <onboarding@resend.dev>",
-        to: [normalizedEmail],
-        subject: "Your Jabeen Jewels password reset OTP",
-        html: `
-          <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #fff;">
-            <h2 style="font-size: 22px; color: #1a1a1a; margin-bottom: 8px;">Password Reset</h2>
-            <p style="color: #555; margin-bottom: 24px;">Use the code below to reset your Jabeen Jewels admin password. It expires in <strong>10 minutes</strong>.</p>
-            <div style="background: #f8f4f0; border: 1px solid #e0d9d1; border-radius: 8px; padding: 24px; text-align: center; letter-spacing: 8px; font-size: 36px; font-weight: bold; color: #8b5e3c;">
-              ${otp}
-            </div>
-            <p style="color: #999; font-size: 13px; margin-top: 24px;">If you did not request this, please ignore this email.</p>
-          </div>
-        `,
-      }),
-    });
+    const emailHtml = `
+      <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #fff;">
+        <h2 style="font-size: 22px; color: #1a1a1a; margin-bottom: 8px;">Password Reset</h2>
+        <p style="color: #555; margin-bottom: 24px;">Use the code below to reset your Jabeen Jewels admin password. It expires in <strong>10 minutes</strong>.</p>
+        <div style="background: #f8f4f0; border: 1px solid #e0d9d1; border-radius: 8px; padding: 24px; text-align: center; letter-spacing: 8px; font-size: 36px; font-weight: bold; color: #8b5e3c;">
+          ${otp}
+        </div>
+        <p style="color: #999; font-size: 13px; margin-top: 24px;">If you did not request this, please ignore this email.</p>
+      </div>
+    `;
+    const emailPayload = {
+      from: "Jabeen Jewels Admin <onboarding@resend.dev>",
+      to: [normalizedEmail],
+      subject: "Your Jabeen Jewels password reset OTP",
+      html: emailHtml,
+    };
 
-    if (!emailRes.ok) {
-      const errBody = await emailRes.text().catch(() => "unknown");
-      console.error("Resend error:", errBody);
-      // Clean up OTP record if email failed
+    let emailOk = false;
+
+    if (process.env.RESEND_API_KEY) {
+      // Direct Resend API (works on Vercel and any environment)
+      const emailRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        },
+        body: JSON.stringify(emailPayload),
+      });
+      if (!emailRes.ok) {
+        const errBody = await emailRes.text().catch(() => "unknown");
+        console.error("Resend direct API error:", errBody);
+      } else {
+        emailOk = true;
+      }
+    } else {
+      // Replit connector fallback (only works on Replit)
+      const connectors = new ReplitConnectors();
+      const emailRes = await connectors.proxy("resend", "/emails", {
+        method: "POST",
+        body: JSON.stringify(emailPayload),
+      });
+      if (!emailRes.ok) {
+        const errBody = await emailRes.text().catch(() => "unknown");
+        console.error("Resend connector error:", errBody);
+      } else {
+        emailOk = true;
+      }
+    }
+
+    if (!emailOk) {
       await db.delete(passwordResetOtpsTable).where(eq(passwordResetOtpsTable.email, normalizedEmail));
       res.status(500).json({ error: "Failed to send OTP email. Please try again." });
       return;

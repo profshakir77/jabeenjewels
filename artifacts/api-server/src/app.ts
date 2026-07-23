@@ -3,8 +3,10 @@ import cors from "cors";
 import compression from "compression";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { pool } from "@workspace/db";
 
 const app: Express = express();
 
@@ -41,14 +43,23 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
+// Use PostgreSQL session store in production (serverless-safe), MemoryStore in dev
+const PgSession = connectPg(session);
+const sessionStore =
+  process.env.NODE_ENV === "production"
+    ? new PgSession({ pool, createTableIfMissing: true, tableName: "sessions" })
+    : undefined;
+
 app.use(
   session({
+    store: sessionStore,
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),

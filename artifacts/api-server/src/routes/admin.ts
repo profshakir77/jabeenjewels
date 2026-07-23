@@ -29,7 +29,16 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     return;
   }
   (req.session as any).admin = { username: admin.username, isAdmin: true };
-  res.json({ username: admin.username, isAdmin: true });
+  // Explicitly save session before responding — required on serverless (Vercel)
+  // to ensure the DB write completes before the next request arrives.
+  req.session.save((err) => {
+    if (err) {
+      console.error("Session save error:", err);
+      res.status(500).json({ error: "Session error, please try again." });
+      return;
+    }
+    res.json({ username: admin.username, isAdmin: true });
+  });
 });
 
 router.post("/admin/logout", requireAdmin, async (req, res): Promise<void> => {

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { UppyFile } from '@uppy/core';
+import { upload } from '@vercel/blob/client';
 
 interface UploadMetadata {
   name: string;
@@ -108,14 +109,24 @@ export function useUpload(options: UseUploadOptions = {}) {
 
       try {
         setProgress(10);
-        const uploadResponse = await requestUploadUrl(file);
-
-        setProgress(30);
-        await uploadToPresignedUrl(file, uploadResponse.uploadURL);
-
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: `${basePath}/uploads/request-url`,
+        });
         setProgress(100);
-        options.onSuccess?.(uploadResponse);
-        return uploadResponse;
+
+        const result: UploadResponse = {
+          uploadURL: blob.url,
+          objectPath: blob.url,
+          metadata: {
+            name: file.name,
+            size: file.size,
+            contentType: file.type,
+          },
+        };
+
+        options.onSuccess?.(result);
+        return result;
       } catch (err) {
         const error = err instanceof Error ? err : new Error('Upload failed');
         setError(error);
@@ -125,7 +136,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         setIsUploading(false);
       }
     },
-    [requestUploadUrl, uploadToPresignedUrl, options],
+    [basePath, options],
   );
 
   const getUploadParameters = useCallback(

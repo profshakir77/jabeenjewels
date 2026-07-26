@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 
 interface ImageUploaderProps {
   images: string[];
@@ -10,68 +11,12 @@ interface ImageUploaderProps {
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
 async function uploadFile(file: File): Promise<string> {
-  // 1. Request a presigned upload URL from the backend
-  const metaRes = await fetch(
-    `${BASE}/api/storage/uploads/request-url`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-      }),
-    }
-  );
-
-  // Try to read the backend response
-  const metaData = await metaRes.json().catch(() => ({}));
-
-  if (!metaRes.ok) {
-    console.error("Upload URL request failed:", {
-      status: metaRes.status,
-      statusText: metaRes.statusText,
-      response: metaData,
-    });
-
-    throw new Error(
-      metaData?.error ||
-        `Failed to get upload URL (${metaRes.status})`
-    );
-  }
-
-  const { uploadURL, objectPath } = metaData;
-
-  if (!uploadURL || !objectPath) {
-    console.error("Invalid upload response:", metaData);
-    throw new Error("Invalid upload URL response from server");
-  }
-
-  // 2. Upload the file directly to object storage
-  const uploadRes = await fetch(uploadURL, {
-    method: "PUT",
-    headers: {
-      "Content-Type": file.type,
-    },
-    body: file,
+  const blob = await upload(file.name, file, {
+    access: "public",
+    handleUploadUrl: `${BASE}/api/storage/uploads/request-url`,
   });
 
-  if (!uploadRes.ok) {
-    console.error("Direct upload failed:", {
-      status: uploadRes.status,
-      statusText: uploadRes.statusText,
-    });
-
-    throw new Error(
-      `Direct file upload failed (${uploadRes.status})`
-    );
-  }
-
-  // 3. Return the URL used by the application to display the image
-  return `${BASE}/api/storage${objectPath}`;
+  return blob.url;
 }
 
 export function ImageUploader({

@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
 import { z } from 'zod';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { Router, type IRouter, type Request, type Response } from 'express';
 import { requireAdmin } from '../middleware/requireAdmin';
 
@@ -66,29 +67,26 @@ router.post(
   '/storage/uploads/request-url',
   requireAdmin,
   async (req: Request, res: Response) => {
-    const parsed = RequestUploadUrlBody.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: 'Missing or invalid required fields' });
-      return;
-    }
+    const body = req.body as HandleUploadBody;
 
     try {
-      const { name, size, contentType } = parsed.data;
-
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      const objectPath =
-        objectStorageService.normalizeObjectEntityPath(uploadURL);
-
-      res.json(
-        RequestUploadUrlResponse.parse({
-          uploadURL,
-          objectPath,
-          metadata: { name, size, contentType },
+      const jsonResponse = await handleUpload({
+        body,
+        request: req,
+        onBeforeGenerateToken: async () => ({
+          allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+          addRandomSuffix: true,
+          maximumSizeInBytes: 10 * 1024 * 1024,
         }),
-      );
+        onUploadCompleted: async ({ blob }) => {
+          console.log('Upload completed:', blob.url);
+        },
+      });
+
+      res.json(jsonResponse);
     } catch (error) {
       req.log.error({ err: error }, 'Error generating upload URL');
-      res.status(500).json({ error: 'Failed to generate upload URL' });
+      res.status(400).json({ error: (error as Error).message });
     }
   },
 );

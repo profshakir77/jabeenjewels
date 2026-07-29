@@ -48,7 +48,7 @@ const PgSession = connectPg(session);
 let sessionStore: InstanceType<ReturnType<typeof connectPg>> | undefined;
 if (process.env.NODE_ENV === "production") {
   try {
-    sessionStore = new PgSession({ pool, createTableIfMissing: true, tableName: "sessions" });
+    sessionStore = new PgSession({ pool, createTableIfMissing: false, tableName: "sessions" });
   } catch (err) {
     console.error("Failed to initialise PG session store — falling back to MemoryStore:", err);
     sessionStore = undefined;

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ImageUploader } from "@/components/ImageUploader";
 
 const categorySchema = z.object({
   name: z.string().min(2),
@@ -146,6 +147,23 @@ export default function AdminCategories() {
                       <FormLabel>Slug</FormLabel>
                       <FormControl>
                         <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Image</FormLabel>
+                      <FormControl>
+                        <ImageUploader
+                          images={field.value ? [field.value] : []}
+                          onChange={(imgs) => field.onChange(imgs[imgs.length - 1] || "")}
+                          max={1}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

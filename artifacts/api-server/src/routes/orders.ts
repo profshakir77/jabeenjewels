@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { createPostexOrder } from "../lib/postex";
 import { eq, desc, type SQL } from "drizzle-orm";
 import { db, ordersTable, productsTable } from "@workspace/db";
 import {
@@ -84,6 +85,32 @@ router.post("/orders", async (req, res): Promise<void> => {
     total: String(total),
     status: "pending",
   }).returning();
+
+  // Book with PostEx — failure here must never break checkout for the customer
+  try {
+    const postexResult = await createPostexOrder({
+      orderRefNumber: String(order.id),
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      deliveryAddress: order.customerAddress,
+      cityName: order.customerCity,
+      invoicePayment: total,
+      orderDetail: enrichedItems.map(i => `${i.productName} x${i.quantity}`).join(", "),
+    });
+
+    // NOTE: requires a `trackingNumber` column on ordersTable — see below
+    // const [updated] = await db.update(ordersTable)
+    //   .set({ trackingNumber: postexResult.dist.trackingNumber })
+    //   .where(eq(ordersTable.id, order.id))
+    //   .returning();
+    // res.status(201).json(formatOrder(updated));
+    // return;
+
+    console.log(`PostEx booked for order ${order.id}: ${postexResult.dist.trackingNumber}`);
+  } catch (err) {
+    console.error(`PostEx order creation failed for order ${order.id}:`, err);
+    // Order still succeeds on your site; you can retry booking manually later
+  }
 
   res.status(201).json(formatOrder(order));
 });

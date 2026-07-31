@@ -73,6 +73,7 @@ export async function createPostexOrder(
       orderDetail: input.orderDetail ?? "",
       orderRefNumber: input.orderRefNumber,
       orderType: "Normal",
+      pickupAddressCode: "001",
     },
   });
 }

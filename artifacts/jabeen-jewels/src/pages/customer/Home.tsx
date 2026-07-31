@@ -191,7 +191,7 @@ export default function Home() {
               <Link
                 key={category.id}
                 href={`/category/${category.slug}`}
-                className="group relative overflow-hidden aspect-[4/5] bg-muted flex items-center justify-center text-center rounded-sm"
+                className="group relative overflow-hidden aspect-[4/5] bg-muted flex items-end justify-center text-center rounded-sm"
               >
                 <img
                   src={category.imageUrl!}
@@ -199,7 +199,7 @@ export default function Home() {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-500" />
-                <div className="relative z-10 p-4 border border-white/30 bg-white/10 backdrop-blur-sm transform transition-transform duration-500 group-hover:scale-105">
+                <div className="relative z-10 w-[calc(100%-2rem)] mb-4 p-4 border border-white/30 bg-white/10 backdrop-blur-sm transform transition-transform duration-500 group-hover:scale-105">
                   <h3 className="font-serif text-lg sm:text-xl text-white leading-tight">{category.name}</h3>
                 </div>
               </Link>
@@ -209,9 +209,9 @@ export default function Home() {
               <Link
                 key={category.id}
                 href={`/category/${category.slug}`}
-                className="group relative overflow-hidden aspect-[4/5] flex items-center justify-center text-center rounded-sm bg-gradient-to-br from-primary/10 to-primary/5 border border-border hover:border-primary/30 transition-colors"
+                className="group relative overflow-hidden aspect-[4/5] flex items-end justify-center text-center rounded-sm bg-gradient-to-br from-primary/10 to-primary/5 border border-border hover:border-primary/30 transition-colors"
               >
-                <div className="p-4 text-center">
+                <div className="p-4 pb-6 text-center">
                   <Gem className="h-8 w-8 text-primary/40 mx-auto mb-3" />
                   <h3 className="font-serif text-lg text-foreground leading-tight">{category.name}</h3>
                 </div>

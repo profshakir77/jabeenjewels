@@ -90,7 +90,7 @@ export default function ProductDetail() {
       productId: product.id,
       name: product.name,
       price: priceToUse,
-      image: product.images?.[0] || "/placeholder.jpg",
+      image: mainImage || product.images?.[0] || "/placeholder.jpg",
       quantity,
       color: selectedColor || undefined,
     });

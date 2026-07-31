@@ -1,8 +1,7 @@
 // PostEx Merchant API client
-// Docs: PostEx COD API Integration Guide (v4.1.9) — verify base URL/paths
-// against your merchant dashboard's docs before going live.
+// Docs: PostEx COD API Integration Guide (v4.1.9)
 
-const POSTEX_BASE_URL = "https://api.postex.pk/services/integration/api/order/v3";
+const POSTEX_ROOT = "https://api.postex.pk/services/integration/api/order";
 
 function getToken(): string {
   const token = process.env.POSTEX_API_TOKEN;
@@ -16,7 +15,7 @@ async function postexRequest<T>(
   path: string,
   options: { method?: string; body?: unknown } = {}
 ): Promise<T> {
-  const res = await fetch(`${POSTEX_BASE_URL}${path}`, {
+  const res = await fetch(`${POSTEX_ROOT}${path}`, {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
@@ -27,7 +26,7 @@ async function postexRequest<T>(
 
   const data = await res.json().catch(() => null);
 
-  if (!res.ok) {
+  if (!res.ok || (data && data.statusCode && data.statusCode !== "200")) {
     const message =
       (data && (data.statusMessage || data.message)) ||
       `PostEx request failed with status ${res.status}`;
@@ -38,13 +37,14 @@ async function postexRequest<T>(
 }
 
 export interface PostexCreateOrderInput {
-  orderRefNumber: string;      // your internal order id, must be unique
+  orderRefNumber: string;
   customerName: string;
-  customerPhone: string;       // format 03xxxxxxxxx
+  customerPhone: string;
   deliveryAddress: string;
-  invoicePayment: number;      // total amount to collect (COD)
-  orderDetail?: string;        // e.g. product summary
-  cityName: string;            // must match a PostEx operational city
+  invoicePayment: number;
+  orderDetail?: string;
+  cityName: string;
+  items: number;
 }
 
 export interface PostexCreateOrderResponse {
@@ -53,20 +53,23 @@ export interface PostexCreateOrderResponse {
   dist: {
     trackingNumber: string;
     orderStatus?: string;
+    orderDate?: string;
   };
 }
 
 export async function createPostexOrder(
   input: PostexCreateOrderInput
 ): Promise<PostexCreateOrderResponse> {
-  return postexRequest<PostexCreateOrderResponse>("/create-order", {
+  return postexRequest<PostexCreateOrderResponse>("/v3/create-order", {
     method: "POST",
     body: {
       cityName: input.cityName,
       customerName: input.customerName,
       customerPhone: input.customerPhone,
       deliveryAddress: input.deliveryAddress,
+      invoiceDivision: 1,
       invoicePayment: input.invoicePayment,
+      items: input.items,
       orderDetail: input.orderDetail ?? "",
       orderRefNumber: input.orderRefNumber,
       orderType: "Normal",
@@ -83,11 +86,18 @@ export interface PostexCity {
 
 export async function getOperationalCities(): Promise<PostexCity[]> {
   const data = await postexRequest<{ dist: PostexCity[] }>(
-    "/get-operational-city"
+    "/v2/get-operational-city"
   );
   return data.dist;
 }
 
 export async function trackPostexOrder(trackingNumber: string) {
-  return postexRequest(`/get-order-detail/${trackingNumber}`);
+  return postexRequest(`/v1/track-order/${trackingNumber}`);
+}
+
+export async function cancelPostexOrder(trackingNumber: string) {
+  return postexRequest(`/v1/cancel-order`, {
+    method: "PUT",
+    body: { trackingNumber },
+  });
 }

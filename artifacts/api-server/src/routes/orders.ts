@@ -55,7 +55,6 @@ router.post("/orders", async (req, res): Promise<void> => {
   }
   const { items, customerName, customerPhone, customerEmail, customerAddress, customerCity, notes } = parsed.data;
 
-  // Build enriched items
   const enrichedItems: Array<{ productId: number; productName: string; productImage: string; quantity: number; price: number }> = [];
   for (const item of items) {
     const [product] = await db.select().from(productsTable).where(eq(productsTable.id, item.productId));
@@ -86,8 +85,13 @@ router.post("/orders", async (req, res): Promise<void> => {
     status: "pending",
   }).returning();
 
-  // Book with PostEx — failure here must never break checkout for the customer
   try {
+    if (!order.customerCity) {
+      throw new Error("Customer city is required for PostEx booking");
+    }
+
+    const totalItems = enrichedItems.reduce((sum, i) => sum + i.quantity, 0);
+
     const postexResult = await createPostexOrder({
       orderRefNumber: String(order.id),
       customerName: order.customerName,
@@ -95,21 +99,24 @@ router.post("/orders", async (req, res): Promise<void> => {
       deliveryAddress: order.customerAddress,
       cityName: order.customerCity,
       invoicePayment: total,
+      items: totalItems,
       orderDetail: enrichedItems.map(i => `${i.productName} x${i.quantity}`).join(", "),
     });
 
-    // NOTE: requires a `trackingNumber` column on ordersTable — see below
-    // const [updated] = await db.update(ordersTable)
-    //   .set({ trackingNumber: postexResult.dist.trackingNumber })
-    //   .where(eq(ordersTable.id, order.id))
-    //   .returning();
-    // res.status(201).json(formatOrder(updated));
-    // return;
+    const [updated] = await db.update(ordersTable)
+      .set({
+        postexTrackingNumber: postexResult.dist.trackingNumber,
+        postexOrderStatus: postexResult.dist.orderStatus ?? "UnBooked",
+        postexBookedAt: new Date(),
+      })
+      .where(eq(ordersTable.id, order.id))
+      .returning();
 
     console.log(`PostEx booked for order ${order.id}: ${postexResult.dist.trackingNumber}`);
+    res.status(201).json(formatOrder(updated));
+    return;
   } catch (err) {
     console.error(`PostEx order creation failed for order ${order.id}:`, err);
-    // Order still succeeds on your site; you can retry booking manually later
   }
 
   res.status(201).json(formatOrder(order));

@@ -62,11 +62,11 @@ export default function Cart() {
 
             <div className="space-y-6 md:space-y-0 divide-y divide-border">
               {items.map((item) => (
-                <div key={item.productId} className="py-6 md:grid md:grid-cols-12 md:items-center gap-4 relative">
+                <div key={`${item.productId}-${item.color ?? ""}`} className="py-6 md:grid md:grid-cols-12 md:items-center gap-4 relative">
                   
                   {/* Mobile delete button */}
                   <button 
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId, item.color)}
                     className="absolute top-6 right-0 md:hidden text-muted-foreground hover:text-destructive p-2"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -82,6 +82,9 @@ export default function Cart() {
                       <Link href={`/product/${item.productId}`} className="font-serif text-lg hover:text-primary transition-colors line-clamp-2">
                         {item.name}
                       </Link>
+                      {item.color && (
+                        <div className="text-sm text-muted-foreground mt-0.5">Color: {item.color}</div>
+                      )}
                       <div className="text-primary font-medium mt-1 md:hidden">
                         {formatPKR(item.price)}
                       </div>
@@ -96,13 +99,13 @@ export default function Cart() {
                     <div className="flex items-center border border-border rounded-none h-9 w-28">
                       <button 
                         type="button"
-                        onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                        onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1), item.color)}
                         className="w-8 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                       >-</button>
                       <span className="flex-1 text-center text-sm font-medium">{item.quantity}</span>
                       <button 
                         type="button"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1, item.color)}
                         className="w-8 h-full flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors"
                       >+</button>
                     </div>
@@ -113,7 +116,7 @@ export default function Cart() {
                     <div className="flex items-center gap-4">
                       <span className="font-medium text-foreground">{formatPKR(item.price * item.quantity)}</span>
                       <button 
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.productId, item.color)}
                         className="hidden md:flex text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-muted transition-colors"
                         title="Remove item"
                       >

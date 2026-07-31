@@ -6,9 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface OrderItemInput {
-  productId: number;
-  quantity: number;
-  price: number;
-  color?: string;
-}
+export type ProductInputColorsItem = {
+  name?: string;
+  quantity?: number;
+};

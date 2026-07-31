@@ -28,6 +28,11 @@ export interface CategoryInput {
   imageUrl?: string;
 }
 
+export type ProductColorsItem = {
+  name?: string;
+  quantity?: number;
+};
+
 export interface Product {
   id: number;
   name: string;
@@ -51,9 +56,14 @@ export interface Product {
   /** @nullable */
   weight?: string | null;
   tags?: string[];
-  colors?: { name: string; quantity: number }[];
+  colors?: ProductColorsItem[];
   createdAt?: string;
 }
+
+export type ProductInputColorsItem = {
+  name?: string;
+  quantity?: number;
+};
 
 export interface ProductInput {
   name: string;
@@ -72,7 +82,7 @@ export interface ProductInput {
   material?: string;
   weight?: string;
   tags?: string[];
-  colors?: { name: string; quantity: number }[];
+  colors?: ProductInputColorsItem[];
 }
 
 export interface ProductList {
@@ -94,6 +104,7 @@ export interface OrderItemInput {
   productId: number;
   quantity: number;
   price: number;
+  color?: string;
 }
 
 export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];

@@ -69,7 +69,6 @@ export default function ProductDetail() {
   const productColors = normaliseColors((product as any).colors);
   const priceToUse = product.isOnSale && product.salePrice ? product.salePrice : product.price;
 
-  // Per-color stock: if a color is selected, use its quantity; otherwise fall back to overall stockQuantity
   const selectedColorEntry = productColors.find(c => c.name === selectedColor);
   const colorStock = selectedColorEntry?.quantity ?? null;
   const effectiveStock = productColors.length > 0
@@ -80,7 +79,6 @@ export default function ProductDetail() {
   const isOutOfColorStock = productColors.length > 0 && effectiveStock === 0;
   const isLowStock = effectiveStock > 0 && effectiveStock <= 10;
 
-  // Reset quantity when color changes
   const handleColorSelect = (colorName: string) => {
     setSelectedColor(colorName);
     setQuantity(1);
@@ -93,7 +91,8 @@ export default function ProductDetail() {
       name: product.name,
       price: priceToUse,
       image: product.images?.[0] || "/placeholder.jpg",
-      quantity
+      quantity,
+      color: selectedColor || undefined,
     });
     toast({
       title: "Added to Cart",
@@ -176,7 +175,6 @@ export default function ProductDetail() {
             </div>
 
             <div className="space-y-6 mb-8">
-              {/* Stock status — only shown when no per-color stock */}
               {productColors.length === 0 && (
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium w-20 shrink-0">Status:</span>
@@ -193,7 +191,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Overall low-stock warning (no colors) */}
               {productColors.length === 0 && product.inStock && product.stockQuantity != null && product.stockQuantity > 0 && product.stockQuantity <= 10 && (
                 <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -201,7 +198,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Material */}
               {product.material && (
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium w-20 shrink-0">Material:</span>
@@ -209,7 +205,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Color selector with per-color stock */}
               {productColors.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
@@ -271,7 +266,6 @@ export default function ProductDetail() {
                     })}
                   </div>
 
-                  {/* Selected color out-of-stock warning */}
                   {isOutOfColorStock && (
                     <div className="flex items-center gap-2 text-destructive bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
@@ -279,7 +273,6 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Low stock warning for selected color */}
                   {isLowStock && !isOutOfColorStock && (
                     <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       <AlertCircle className="w-4 h-4 shrink-0" />
@@ -289,7 +282,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Quantity */}
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium w-20 shrink-0">Quantity:</span>
                 <div className="flex items-center border border-border rounded-none h-10 w-32">
@@ -367,7 +359,6 @@ export default function ProductDetail() {
   );
 }
 
-// Normalise: handles both old string[] and new {name,quantity}[] from DB
 function normaliseColors(raw: any): ColorEntry[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((c: any) =>

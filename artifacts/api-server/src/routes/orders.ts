@@ -55,7 +55,7 @@ router.post("/orders", async (req, res): Promise<void> => {
   }
   const { items, customerName, customerPhone, customerEmail, customerAddress, customerCity, notes } = parsed.data;
 
-  const enrichedItems: Array<{ productId: number; productName: string; productImage: string; quantity: number; price: number }> = [];
+  const enrichedItems: Array<{ productId: number; productName: string; productImage: string; quantity: number; price: number; color?: string }> = [];
   for (const item of items) {
     const [product] = await db.select().from(productsTable).where(eq(productsTable.id, item.productId));
     enrichedItems.push({
@@ -64,6 +64,7 @@ router.post("/orders", async (req, res): Promise<void> => {
       productImage: product?.images?.[0] ?? "",
       quantity: item.quantity,
       price: item.price,
+      color: item.color,
     });
   }
 
@@ -85,6 +86,7 @@ router.post("/orders", async (req, res): Promise<void> => {
     status: "pending",
   }).returning();
 
+  // Book with PostEx — failure here must never break checkout for the customer
   try {
     if (!order.customerCity) {
       throw new Error("Customer city is required for PostEx booking");
@@ -100,7 +102,7 @@ router.post("/orders", async (req, res): Promise<void> => {
       cityName: order.customerCity,
       invoicePayment: total,
       items: totalItems,
-      orderDetail: enrichedItems.map(i => `${i.productName} x${i.quantity}`).join(", "),
+      orderDetail: enrichedItems.map(i => `${i.productName}${i.color ? ` (${i.color})` : ""} x${i.quantity}`).join(", "),
     });
 
     const [updated] = await db.update(ordersTable)
@@ -117,6 +119,7 @@ router.post("/orders", async (req, res): Promise<void> => {
     return;
   } catch (err) {
     console.error(`PostEx order creation failed for order ${order.id}:`, err);
+    // Order still succeeds on your site; you can retry booking manually later
   }
 
   res.status(201).json(formatOrder(order));

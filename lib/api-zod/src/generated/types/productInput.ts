@@ -5,6 +5,7 @@
  * Jabeen Jewels e-commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductInputColorsItem } from './productInputColorsItem';
 
 export interface ProductInput {
   name: string;
@@ -23,5 +24,5 @@ export interface ProductInput {
   material?: string;
   weight?: string;
   tags?: string[];
-  colors?: string[];
+  colors?: ProductInputColorsItem[];
 }

@@ -16,6 +16,7 @@ export const ordersTable = pgTable("orders", {
     productImage: string;
     quantity: number;
     price: number;
+    color?: string;
   }>>().default([]),
   subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
   shippingFee: numeric("shipping_fee", { precision: 12, scale: 2 }).notNull().default("0"),

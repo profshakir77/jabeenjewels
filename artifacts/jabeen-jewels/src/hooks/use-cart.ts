@@ -6,6 +6,11 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  color?: string;
+}
+
+function sameItem(a: { productId: number; color?: string }, b: { productId: number; color?: string }) {
+  return a.productId === b.productId && (a.color ?? "") === (b.color ?? "");
 }
 
 export function useCart() {
@@ -25,10 +30,10 @@ export function useCart() {
 
   const addItem = useCallback((newItem: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === newItem.productId);
+      const existing = prev.find((i) => sameItem(i, newItem));
       if (existing) {
         return prev.map((i) =>
-          i.productId === newItem.productId
+          sameItem(i, newItem)
             ? { ...i, quantity: i.quantity + newItem.quantity }
             : i
         );
@@ -37,13 +42,13 @@ export function useCart() {
     });
   }, []);
 
-  const removeItem = useCallback((productId: number) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((productId: number, color?: string) => {
+    setItems((prev) => prev.filter((i) => !sameItem(i, { productId, color })));
   }, []);
 
-  const updateQuantity = useCallback((productId: number, quantity: number) => {
+  const updateQuantity = useCallback((productId: number, quantity: number, color?: string) => {
     setItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, quantity } : i))
+      prev.map((i) => (sameItem(i, { productId, color }) ? { ...i, quantity } : i))
     );
   }, []);
 

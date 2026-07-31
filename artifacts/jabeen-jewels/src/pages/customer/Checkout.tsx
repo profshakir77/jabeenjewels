@@ -52,7 +52,7 @@ export default function Checkout() {
     },
   });
 
-  if (items.length === 0) return null; // Handled by useEffect redirect
+  if (items.length === 0) return null;
 
   const shipping = subtotal >= 5000 ? 0 : 250;
   const total = subtotal + shipping;
@@ -66,6 +66,7 @@ export default function Checkout() {
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
+            color: item.color,
           }))
         }
       },
@@ -214,7 +215,7 @@ export default function Checkout() {
               
               <div className="space-y-4 mb-6">
                 {items.map(item => (
-                  <div key={item.productId} className="flex gap-4">
+                  <div key={`${item.productId}-${item.color ?? ""}`} className="flex gap-4">
                     <div className="w-16 h-16 bg-muted rounded border border-border shrink-0 relative overflow-hidden">
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/90 text-[10px] font-bold text-white z-10">
@@ -223,6 +224,9 @@ export default function Checkout() {
                     </div>
                     <div className="flex-1 flex flex-col justify-center text-sm">
                       <span className="font-medium line-clamp-1">{item.name}</span>
+                      {item.color && (
+                        <span className="text-xs text-muted-foreground">Color: {item.color}</span>
+                      )}
                       <span className="text-muted-foreground">{formatPKR(item.price)}</span>
                     </div>
                   </div>

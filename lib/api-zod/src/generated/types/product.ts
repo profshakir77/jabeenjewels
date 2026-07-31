@@ -5,6 +5,7 @@
  * Jabeen Jewels e-commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductColorsItem } from './productColorsItem';
 
 export interface Product {
   id: number;
@@ -29,6 +30,6 @@ export interface Product {
   /** @nullable */
   weight?: string | null;
   tags?: string[];
-  colors?: string[];
+  colors?: ProductColorsItem[];
   createdAt?: string;
 }

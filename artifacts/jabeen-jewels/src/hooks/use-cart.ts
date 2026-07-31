@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 export interface CartItem {
   productId: number;
@@ -13,7 +13,19 @@ function sameItem(a: { productId: number; color?: string }, b: { productId: numb
   return a.productId === b.productId && (a.color ?? "") === (b.color ?? "");
 }
 
-export function useCart() {
+interface CartContextValue {
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (productId: number, color?: string) => void;
+  updateQuantity: (productId: number, quantity: number, color?: string) => void;
+  clearCart: () => void;
+  subtotal: number;
+  itemCount: number;
+}
+
+const CartContext = createContext<CartContextValue | undefined>(undefined);
+
+export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const stored = localStorage.getItem("jabeen-jewels-cart");
@@ -59,7 +71,7 @@ export function useCart() {
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
   const itemCount = items.reduce((count, item) => count + item.quantity, 0);
 
-  return {
+  const value: CartContextValue = {
     items,
     addItem,
     removeItem,
@@ -68,4 +80,14 @@ export function useCart() {
     subtotal,
     itemCount,
   };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart(): CartContextValue {
+  const ctx = useContext(CartContext);
+  if (!ctx) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return ctx;
 }

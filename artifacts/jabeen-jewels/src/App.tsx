@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
-
+import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
+import { CartProvider } from '@/hooks/use-cart';
 // Customer Pages
 import Home from './pages/customer/Home';
 import Shop from './pages/customer/Shop';
@@ -12,7 +13,6 @@ import Cart from './pages/customer/Cart';
 import Checkout from './pages/customer/Checkout';
 import OrderSuccess from './pages/customer/OrderSuccess';
 import Search from './pages/customer/Search';
-
 // Admin Pages
 import AdminLogin from './pages/admin/Login';
 import ChangePassword from './pages/admin/ChangePassword';
@@ -35,34 +35,43 @@ const queryClient = new QueryClient({
   },
 });
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
-    <Switch>
-      {/* Customer Routes */}
-      <Route path="/" component={Home} />
-      <Route path="/shop" component={Shop} />
-      <Route path="/product/:id" component={ProductDetail} />
-      <Route path="/category/:slug" component={Category} />
-      <Route path="/cart" component={Cart} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/order-success/:id" component={OrderSuccess} />
-      <Route path="/search" component={Search} />
-
-      {/* Admin Routes */}
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin" component={() => <ProtectedRoute component={Dashboard} />} />
-      <Route path="/admin/products" component={() => <ProtectedRoute component={AdminProducts} />} />
-      <Route path="/admin/products/new" component={() => <ProtectedRoute component={ProductForm} />} />
-      <Route path="/admin/products/:id/edit" component={() => <ProtectedRoute component={ProductForm} />} />
-      <Route path="/admin/categories" component={() => <ProtectedRoute component={AdminCategories} />} />
-      <Route path="/admin/orders" component={() => <ProtectedRoute component={AdminOrders} />} />
-      <Route path="/admin/banners" component={() => <ProtectedRoute component={AdminBanners} />} />
-      <Route path="/admin/change-password" component={() => <ProtectedRoute component={ChangePassword} />} />
-      <Route path="/admin/users" component={() => <ProtectedRoute component={AdminUsers} />} />
-
-      {/* 404 */}
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <ScrollToTop />
+      <Switch>
+        {/* Customer Routes */}
+        <Route path="/" component={Home} />
+        <Route path="/shop" component={Shop} />
+        <Route path="/product/:id" component={ProductDetail} />
+        <Route path="/category/:slug" component={Category} />
+        <Route path="/cart" component={Cart} />
+        <Route path="/checkout" component={Checkout} />
+        <Route path="/order-success/:id" component={OrderSuccess} />
+        <Route path="/search" component={Search} />
+        {/* Admin Routes */}
+        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin" component={() => <ProtectedRoute component={Dashboard} />} />
+        <Route path="/admin/products" component={() => <ProtectedRoute component={AdminProducts} />} />
+        <Route path="/admin/products/new" component={() => <ProtectedRoute component={ProductForm} />} />
+        <Route path="/admin/products/:id/edit" component={() => <ProtectedRoute component={ProductForm} />} />
+        <Route path="/admin/categories" component={() => <ProtectedRoute component={AdminCategories} />} />
+        <Route path="/admin/orders" component={() => <ProtectedRoute component={AdminOrders} />} />
+        <Route path="/admin/banners" component={() => <ProtectedRoute component={AdminBanners} />} />
+        <Route path="/admin/change-password" component={() => <ProtectedRoute component={ChangePassword} />} />
+        <Route path="/admin/users" component={() => <ProtectedRoute component={AdminUsers} />} />
+        {/* 404 */}
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
@@ -70,10 +79,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
+        <CartProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </CartProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -12,13 +12,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, X, Plus, Package } from "lucide-react";
+import { ArrowLeft, Loader2, X, Plus, Package, ImagePlus } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
 
 const colorEntrySchema = z.object({
   name: z.string().min(1, "Color name required"),
   quantity: z.coerce.number().min(0, "Must be 0 or more"),
+  image: z.string().optional(),
 });
 
 const productSchema = z.object({
@@ -50,6 +51,7 @@ export default function ProductForm() {
   const queryClient = useQueryClient();
   const [newColorName, setNewColorName] = useState("");
   const [newColorQty, setNewColorQty] = useState<number>(0);
+  const [newColorImage, setNewColorImage] = useState<string>("");
 
   const { data: categories } = useListCategories();
   const { data: product, isLoading: isProductLoading } = useGetProduct(productId, {
@@ -84,10 +86,12 @@ export default function ProductForm() {
     document.title = isEditing ? "Edit Product | Admin" : "New Product | Admin";
     if (isEditing && product) {
       const rawColors = (product as any).colors;
-      // normalise: old text[] → [{name, quantity}], already-correct objects pass through
-      const colors: {name: string; quantity: number}[] = Array.isArray(rawColors)
+      // normalise: old text[] → [{name, quantity, image}], already-correct objects pass through
+      const colors: {name: string; quantity: number; image?: string}[] = Array.isArray(rawColors)
         ? rawColors.map((c: any) =>
-            typeof c === "string" ? { name: c, quantity: 0 } : { name: c.name ?? "", quantity: c.quantity ?? 0 }
+            typeof c === "string"
+              ? { name: c, quantity: 0, image: undefined }
+              : { name: c.name ?? "", quantity: c.quantity ?? 0, image: c.image ?? undefined }
           )
         : [];
 
@@ -118,10 +122,11 @@ export default function ProductForm() {
     if (!trimmed) return;
     const current = form.getValues("colors") || [];
     if (!current.find(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
-      form.setValue("colors", [...current, { name: trimmed, quantity: newColorQty }]);
+      form.setValue("colors", [...current, { name: trimmed, quantity: newColorQty, image: newColorImage || undefined }]);
     }
     setNewColorName("");
     setNewColorQty(0);
+    setNewColorImage("");
   };
 
   const removeColor = (idx: number) => {
@@ -129,7 +134,7 @@ export default function ProductForm() {
     form.setValue("colors", current.filter((_, i) => i !== idx));
   };
 
-  const updateColorField = (idx: number, field: "name" | "quantity", value: string | number) => {
+  const updateColorField = (idx: number, field: "name" | "quantity" | "image", value: string | number) => {
     const current = [...(form.getValues("colors") || [])];
     current[idx] = { ...current[idx], [field]: value };
     form.setValue("colors", current);
@@ -319,7 +324,7 @@ export default function ProductForm() {
               <div className="bg-card border border-border p-6 rounded-xl space-y-5">
                 <div>
                   <h3 className="font-semibold text-lg">Color Variants & Stock</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Add each color with its own stock quantity. Customers will see availability per color.</p>
+                  <p className="text-sm text-muted-foreground mt-1">Add each color with its own image and stock quantity. Customers will see the matching photo when they pick a color.</p>
                 </div>
 
                 <FormField
@@ -329,14 +334,35 @@ export default function ProductForm() {
                     <FormItem>
                       {/* Existing color rows */}
                       {field.value && field.value.length > 0 && (
-                        <div className="space-y-2 mb-4">
-                          <div className="grid grid-cols-[1fr_120px_36px] gap-2 px-1">
+                        <div className="space-y-3 mb-4">
+                          <div className="grid grid-cols-[56px_1fr_110px_36px] gap-2 px-1">
+                            <span className="text-xs font-medium text-muted-foreground">Photo</span>
                             <span className="text-xs font-medium text-muted-foreground">Color Name</span>
                             <span className="text-xs font-medium text-muted-foreground">Stock Qty</span>
                             <span />
                           </div>
                           {field.value.map((color, idx) => (
-                            <div key={idx} className="grid grid-cols-[1fr_120px_36px] gap-2 items-center">
+                            <div key={idx} className="grid grid-cols-[56px_1fr_110px_36px] gap-2 items-center">
+                              <label className="relative w-12 h-12 rounded-md border border-dashed border-border overflow-hidden cursor-pointer flex items-center justify-center bg-muted/40 hover:bg-muted transition-colors shrink-0">
+                                {color.image ? (
+                                  <img src={color.image} alt={color.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    // ImageUploader's underlying upload helper should be reused here if exposed;
+                                    // otherwise wire this to the same upload endpoint ImageUploader uses.
+                                    const url = await uploadSingleImage(file);
+                                    if (url) updateColorField(idx, "image", url);
+                                  }}
+                                />
+                              </label>
                               <Input
                                 value={color.name}
                                 onChange={e => updateColorField(idx, "name", e.target.value)}
@@ -369,7 +395,25 @@ export default function ProductForm() {
                       )}
 
                       {/* Add new color row */}
-                      <div className="grid grid-cols-[1fr_120px_36px] gap-2 items-center pt-2 border-t border-dashed border-border">
+                      <div className="grid grid-cols-[56px_1fr_110px_36px] gap-2 items-center pt-2 border-t border-dashed border-border">
+                        <label className="relative w-12 h-12 rounded-md border border-dashed border-border overflow-hidden cursor-pointer flex items-center justify-center bg-muted/40 hover:bg-muted transition-colors shrink-0">
+                          {newColorImage ? (
+                            <img src={newColorImage} alt="New color" className="w-full h-full object-cover" />
+                          ) : (
+                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const url = await uploadSingleImage(file);
+                              if (url) setNewColorImage(url);
+                            }}
+                          />
+                        </label>
                         <Input
                           placeholder="New color (e.g. Rose Gold)"
                           value={newColorName}
@@ -394,7 +438,7 @@ export default function ProductForm() {
                         </Button>
                       </div>
                       {(!field.value || field.value.length === 0) && (
-                        <p className="text-xs text-muted-foreground mt-2">Enter a color name and quantity, then press Enter or click +.</p>
+                        <p className="text-xs text-muted-foreground mt-2">Upload a photo, enter a color name and quantity, then press Enter or click +.</p>
                       )}
                       <FormMessage />
                     </FormItem>
@@ -431,6 +475,7 @@ export default function ProductForm() {
                         onChange={field.onChange}
                         max={8}
                       />
+                      <FormDescription>General gallery images. Per-color photos are set in the Color Variants section above.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -502,4 +547,25 @@ export default function ProductForm() {
       </Form>
     </AdminLayout>
   );
+}
+
+/**
+ * Uploads a single image file and returns its public URL.
+ * IMPORTANT: This calls the same upload endpoint your existing ImageUploader
+ * component uses. Point this at that endpoint (check ImageUploader.tsx for
+ * the exact URL/field name it posts to) so images land in the same storage
+ * bucket as your product gallery images.
+ */
+async function uploadSingleImage(file: File): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json();
+    return data.url as string;
+  } catch (err) {
+    console.error("Color image upload failed:", err);
+    return null;
+  }
 }

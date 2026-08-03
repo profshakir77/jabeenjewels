@@ -86,7 +86,7 @@ export default function AdminOrders() {
                 <TableHead className="w-[100px]">Order ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead>Items / Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Update Status</TableHead>
               </TableRow>
@@ -115,9 +115,22 @@ export default function AdminOrders() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatPKR(order.total)}
-                      <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                      <div className="mt-2 space-y-2">
                         {order.items.map((item, idx) => (
-                          <div key={idx} className="whitespace-nowrap">{formatItemSummary(item)}</div>
+                          <div key={idx} className="flex items-center gap-2">
+                            {item.productImage ? (
+                              <img
+                                src={item.productImage}
+                                alt={item.productName}
+                                className="w-8 h-8 rounded object-cover border border-border shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-muted shrink-0" />
+                            )}
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {formatItemSummary(item)}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </TableCell>

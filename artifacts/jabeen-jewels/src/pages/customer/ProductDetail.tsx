@@ -9,7 +9,7 @@ import { formatPKR } from "@/lib/utils";
 import { ShoppingBag, MessageCircle, ChevronRight, Truck, ShieldCheck, Heart, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type ColorEntry = { name: string; quantity: number };
+type ColorEntry = { name: string; quantity: number; image?: string };
 
 export default function ProductDetail() {
   const params = useParams();
@@ -32,12 +32,14 @@ export default function ProductDetail() {
   useEffect(() => {
     if (product) {
       document.title = `${product.name} | Jabeen Jewels`;
-      if (product.images?.length > 0 && !mainImage) {
-        setMainImage(product.images[0]);
-      }
       const colors = normaliseColors((product as any).colors);
+
       if (colors.length > 0 && !selectedColor) {
         setSelectedColor(colors[0].name);
+        // Prefer the first color's own photo; fall back to the general gallery
+        setMainImage(colors[0].image || product.images?.[0] || "");
+      } else if (colors.length === 0 && product.images?.length > 0 && !mainImage) {
+        setMainImage(product.images[0]);
       }
     }
   }, [product]);
@@ -82,15 +84,24 @@ export default function ProductDetail() {
   const handleColorSelect = (colorName: string) => {
     setSelectedColor(colorName);
     setQuantity(1);
+    const colorEntry = productColors.find(c => c.name === colorName);
+    if (colorEntry?.image) {
+      // Switch the main displayed image to this color's own photo
+      setMainImage(colorEntry.image);
+    } else if (product.images?.[0]) {
+      // No dedicated photo for this color yet — fall back to the default gallery image
+      setMainImage(product.images[0]);
+    }
   };
 
   const handleAddToCart = () => {
     if (isOutOfColorStock) return;
+    const cartImage = selectedColorEntry?.image || mainImage || product.images?.[0] || "/placeholder.jpg";
     addItem({
       productId: product.id,
       name: product.name,
       price: priceToUse,
-      image: mainImage || product.images?.[0] || "/placeholder.jpg",
+      image: cartImage,
       quantity,
       color: selectedColor || undefined,
     });
@@ -245,6 +256,15 @@ export default function ProductDetail() {
                                 : "border-border text-muted-foreground hover:border-primary/60"
                           }`}
                         >
+                          {color.image && (
+                            <img
+                              src={color.image}
+                              alt={color.name}
+                              className={`w-6 h-6 rounded-full object-cover mb-1 border ${
+                                selectedColor === color.name ? "border-primary-foreground/60" : "border-border"
+                              } ${outOfStock ? "opacity-40" : ""}`}
+                            />
+                          )}
                           <span className={outOfStock ? "line-through" : ""}>{color.name}</span>
                           <span className={`text-[10px] mt-0.5 font-normal ${
                             selectedColor === color.name
@@ -363,7 +383,7 @@ function normaliseColors(raw: any): ColorEntry[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((c: any) =>
     typeof c === "string"
-      ? { name: c, quantity: 0 }
-      : { name: String(c.name ?? ""), quantity: Number(c.quantity ?? 0) }
+      ? { name: c, quantity: 0, image: undefined }
+      : { name: String(c.name ?? ""), quantity: Number(c.quantity ?? 0), image: c.image ? String(c.image) : undefined }
   );
 }

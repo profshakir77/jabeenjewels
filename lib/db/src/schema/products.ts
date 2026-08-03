@@ -3,7 +3,6 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { categoriesTable } from "./categories";
 import { relations } from "drizzle-orm";
-
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -21,18 +20,16 @@ export const productsTable = pgTable("products", {
   material: text("material"),
   weight: text("weight"),
   tags: text("tags").array().notNull().default([]),
-  colors: json("colors").$type<{name: string; quantity: number}[]>().notNull().default([]),
+  colors: json("colors").$type<{name: string; quantity: number; image?: string}[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
-
 export const productsRelations = relations(productsTable, ({ one }) => ({
   category: one(categoriesTable, {
     fields: [productsTable.categoryId],
     references: [categoriesTable.id],
   }),
 }));
-
 export const insertProductSchema = createInsertSchema(productsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof productsTable.$inferSelect;

@@ -10,6 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { OrderStatus } from "@workspace/api-client-react";
 
+const formatItemSummary = (item: { productName: string; color?: string; quantity: number }) => {
+  return `${item.productName}${item.color ? ` (${item.color})` : ""} × ${item.quantity}`;
+};
+
 export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
@@ -60,7 +64,7 @@ export default function AdminOrders() {
           <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
           <p className="text-muted-foreground mt-1">Manage and track customer orders.</p>
         </div>
-        
+
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
@@ -82,7 +86,7 @@ export default function AdminOrders() {
                 <TableHead className="w-[100px]">Order ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead>Items / Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Update Status</TableHead>
               </TableRow>
@@ -111,7 +115,24 @@ export default function AdminOrders() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {formatPKR(order.total)}
-                      <div className="text-xs text-muted-foreground">{order.items.length} items</div>
+                      <div className="mt-2 space-y-2">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            {item.productImage ? (
+                              <img
+                                src={item.productImage}
+                                alt={item.productName}
+                                className="w-8 h-8 rounded object-cover border border-border shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-muted shrink-0" />
+                            )}
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {formatItemSummary(item)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`capitalize ${getStatusColor(order.status)}`}>
@@ -119,8 +140,8 @@ export default function AdminOrders() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Select 
-                        value={order.status} 
+                      <Select
+                        value={order.status}
                         onValueChange={(val) => handleStatusChange(order.id, val)}
                         disabled={updateStatus.isPending}
                       >

@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, X, Plus, Package, ImagePlus } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
+import { upload } from "@vercel/blob/client";
 
 const colorEntrySchema = z.object({
   name: z.string().min(1, "Color name required"),
@@ -356,8 +357,6 @@ export default function ProductForm() {
                                   onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (!file) return;
-                                    // ImageUploader's underlying upload helper should be reused here if exposed;
-                                    // otherwise wire this to the same upload endpoint ImageUploader uses.
                                     const url = await uploadSingleImage(file);
                                     if (url) updateColorField(idx, "image", url);
                                   }}
@@ -549,21 +548,20 @@ export default function ProductForm() {
   );
 }
 
+const UPLOAD_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
 /**
- * Uploads a single image file and returns its public URL.
- * IMPORTANT: This calls the same upload endpoint your existing ImageUploader
- * component uses. Point this at that endpoint (check ImageUploader.tsx for
- * the exact URL/field name it posts to) so images land in the same storage
- * bucket as your product gallery images.
+ * Uploads a single image file via Vercel Blob client upload — the same
+ * flow ImageUploader.tsx uses, so per-color photos land in the same
+ * storage bucket as the product gallery images.
  */
 async function uploadSingleImage(file: File): Promise<string | null> {
   try {
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    if (!res.ok) throw new Error("Upload failed");
-    const data = await res.json();
-    return data.url as string;
+    const blob = await upload(file.name, file, {
+      access: "public",
+      handleUploadUrl: `${UPLOAD_BASE}/api/storage/uploads/request-url`,
+    });
+    return blob.url;
   } catch (err) {
     console.error("Color image upload failed:", err);
     return null;

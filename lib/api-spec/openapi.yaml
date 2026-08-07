@@ -656,6 +656,8 @@ components:
                 type: string
               quantity:
                 type: integer
+              image:
+                type: ["string", "null"]
         createdAt:
           type: string
 
@@ -706,6 +708,8 @@ components:
                 type: string
               quantity:
                 type: integer
+              image:
+                type: ["string", "null"]
 
     ProductList:
       type: object

@@ -5,8 +5,9 @@
  * Jabeen Jewels e-commerce API
  * OpenAPI spec version: 0.1.0
  */
-
 export type ProductInputColorsItem = {
   name?: string;
   quantity?: number;
+  /** @nullable */
+  image?: string | null;
 };

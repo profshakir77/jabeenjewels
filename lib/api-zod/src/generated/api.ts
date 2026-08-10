@@ -142,7 +142,8 @@ export const ListProductsResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })),
@@ -173,7 +174,8 @@ export const CreateProductBody = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional()
 })
 
@@ -197,7 +199,8 @@ export const CreateProductResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -230,7 +233,8 @@ export const GetProductResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -261,7 +265,8 @@ export const UpdateProductBody = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional()
 })
 
@@ -285,7 +290,8 @@ export const UpdateProductResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -324,7 +330,8 @@ export const GetFeaturedProductsResponseItem = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -354,7 +361,8 @@ export const GetNewArrivalsResponseItem = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -384,7 +392,8 @@ export const GetOnSaleProductsResponseItem = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -418,7 +427,8 @@ export const GetProductsByCategoryResponseItem = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })
@@ -677,7 +687,8 @@ export const GetHomepageDataResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })),
@@ -701,7 +712,8 @@ export const GetHomepageDataResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })),
@@ -725,7 +737,8 @@ export const GetHomepageDataResponse = zod.object({
   "tags": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.object({
   "name": zod.string().optional(),
-  "quantity": zod.number().optional()
+  "quantity": zod.number().optional(),
+  "image": zod.string().nullish()
 })).optional(),
   "createdAt": zod.string().optional()
 })),
@@ -801,5 +814,3 @@ export const GetAdminMeResponse = zod.object({
   "username": zod.string(),
   "isAdmin": zod.boolean()
 })
-
-

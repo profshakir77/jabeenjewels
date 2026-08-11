@@ -684,7 +684,7 @@ components:
         inStock:
           type: boolean
         stockQuantity:
-          type: integer
+          type: ["integer", "null"]
         isFeatured:
           type: boolean
         isNewArrival:

@@ -89,7 +89,14 @@ export function Footer() {
         <div className="mt-4 pt-4 border-t border-border/50 text-center">
           <p className="text-xs text-muted-foreground">
             Developed by{" "}
-            <span className="font-semibold text-foreground">Shakir Hussain</span>
+            <a
+              href="https://shakir-portfolio-azure.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-foreground hover:text-primary transition-colors"
+            >
+              Shakir Hussain
+            </a>
             {" · "}
             <a
               href="https://wa.me/923059494585"

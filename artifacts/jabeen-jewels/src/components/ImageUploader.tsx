@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { upload } from "@vercel/blob/client";
 
 interface ImageUploaderProps {
   images: string[];
@@ -11,12 +10,22 @@ interface ImageUploaderProps {
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
 async function uploadFile(file: File): Promise<string> {
-  const blob = await upload(file.name, file, {
-    access: "public",
-    handleUploadUrl: `${BASE}/api/storage/uploads/request-url`,
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${BASE}/api/storage/uploads/upload-file`, {
+    method: "POST",
+    body: formData,
+    credentials: "include",
   });
 
-  return blob.url;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Upload failed");
+  }
+
+  const data = await response.json();
+  return data.uploadURL as string;
 }
 
 export function ImageUploader({

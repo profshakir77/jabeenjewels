@@ -2,7 +2,9 @@ import { Readable } from 'stream';
 import { z } from 'zod';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { Router, type IRouter, type Request, type Response } from 'express';
+import multer from 'multer';
 import { requireAdmin } from '../middleware/requireAdmin';
+import { uploadToFtp } from '../lib/ftpUpload';
 
 // ── Simple in-memory cache for public objects ─────────────────────────────────
 // Avoids hitting GCS on every request (sidecar round-trip is slow).
@@ -42,6 +44,15 @@ import {
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB, matches the old Blob limit
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    cb(null, allowed.includes(file.mimetype));
+  },
+});
+
 function hasAuthenticatedSession(
   req: Request,
 ): req is Request & { isAuthenticated: () => boolean } {
@@ -56,11 +67,45 @@ function hasAuthenticatedSession(
 }
 
 /**
+ * POST /storage/uploads/upload-file
+ *
+ * Direct file upload -> pushed to cPanel via FTP -> returns public URL.
+ * Replaces the old Vercel Blob presigned-URL flow below.
+ */
+router.post(
+  '/storage/uploads/upload-file',
+  requireAdmin,
+  upload.single('file'),
+  async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: 'No file uploaded' });
+        return;
+      }
+
+      const result = await uploadToFtp(req.file.buffer, req.file.originalname);
+
+      res.json({
+        uploadURL: result.url,
+        objectPath: result.url,
+        metadata: {
+          name: req.file.originalname,
+          size: req.file.size,
+          contentType: req.file.mimetype,
+        },
+      });
+    } catch (error) {
+      req.log.error({ err: error }, 'Error uploading file via FTP');
+      res.status(500).json({ error: 'Failed to upload file' });
+    }
+  },
+);
+
+/**
  * POST /storage/uploads/request-url
  *
- * Request a presigned URL for file upload.
- * The client sends JSON metadata (name, size, contentType) — NOT the file.
- * Then uploads the file directly to the returned presigned URL.
+ * LEGACY — Vercel Blob presigned-URL flow. No longer used by the client
+ * (see upload-file above) but left in place in case of rollback.
  * Requires auth middleware so public callers cannot mint write-capable URLs.
  */
 router.post(

@@ -1,61 +1,49 @@
-import SftpClient from 'ssh2-sftp-client';
-import path from 'path';
-import crypto from 'crypto';
-
-const FTP_HOST = process.env.FTP_HOST!;
-const FTP_USER = process.env.FTP_USER!;
-const FTP_PASSWORD = process.env.FTP_PASSWORD!;
-const PUBLIC_BASE_URL = process.env.IMAGES_PUBLIC_BASE_URL || 'https://images.techtutorinstitute.com';
-// The remote directory path uploads land in — matches the FTP account's
-// configured root, e.g. /home/techlhme/images.techtutorinstitute.com
-const REMOTE_DIR = process.env.SFTP_REMOTE_DIR || '/';
-
 interface UploadResult {
   url: string;
   filename: string;
 }
 
+const UPLOAD_ENDPOINT =
+  process.env.IMAGES_UPLOAD_ENDPOINT ||
+  'https://images.techtutorinstitute.com/upload.php';
+const UPLOAD_SECRET = process.env.UPLOAD_SECRET!;
+
 /**
- * Uploads a file buffer to the cPanel server via SFTP (port 22) and
- * returns its public URL.
+ * Uploads a file buffer to the cPanel image host over HTTPS.
  *
- * Uses SFTP rather than plain FTP because plain FTP requires a second,
- * dynamically-negotiated data connection that Vercel's serverless
- * network cannot complete (connections hang until function timeout).
- * SFTP tunnels everything through a single connection, avoiding that
- * problem entirely.
+ * Sends the raw file bytes as the request body (not multipart/form-data)
+ * because a server-side content filter on the host silently strips PHP
+ * scripts and multipart uploads matching the classic $_FILES +
+ * move_uploaded_file pattern. The receiving script (upload.php) reads
+ * php://input and writes it directly instead.
  */
 export async function uploadToFtp(
   buffer: Buffer,
   originalName: string,
 ): Promise<UploadResult> {
-  const ext = path.extname(originalName) || '';
-  const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+  const response = await fetch(UPLOAD_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'X-Upload-Secret': UPLOAD_SECRET,
+      'Content-Type': 'application/octet-stream',
+    },
+    body: buffer,
+  });
 
-  const sftp = new SftpClient();
-
-  try {
-    await sftp.connect({
-      host: FTP_HOST,
-      port: 22,
-      username: FTP_USER,
-      password: FTP_PASSWORD,
-      readyTimeout: 15000,
-    });
-
-    const remotePath =
-      REMOTE_DIR === '/' ? `/${safeName}` : `${REMOTE_DIR}/${safeName}`;
-
-    await sftp.put(buffer, remotePath);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(`SFTP upload failed: ${message}`);
-  } finally {
-    await sftp.end().catch(() => {});
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(
+      `Image host upload failed (${response.status}): ${errorText}`,
+    );
   }
 
+  const data = (await response.json()) as {
+    uploadURL: string;
+    filename: string;
+  };
+
   return {
-    url: `${PUBLIC_BASE_URL}/${safeName}`,
-    filename: safeName,
+    url: data.uploadURL,
+    filename: data.filename,
   };
 }

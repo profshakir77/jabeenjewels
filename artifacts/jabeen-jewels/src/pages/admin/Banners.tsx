@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import {
   useListBanners, useCreateBanner, useUpdateBanner, useDeleteBanner,
@@ -19,11 +18,22 @@ import { useRef } from "react";
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
 async function uploadBannerImage(file: File): Promise<string> {
-  const blob = await upload(file.name, file, {
-    access: "public",
-    handleUploadUrl: `${BASE}/api/storage/uploads/request-url`,
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${BASE}/api/storage/uploads/upload-file`, {
+    method: "POST",
+    body: formData,
+    credentials: "include",
   });
-  return blob.url;
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Upload failed");
+  }
+
+  const data = await response.json();
+  return data.uploadURL as string;
 }
 
 interface BannerForm {

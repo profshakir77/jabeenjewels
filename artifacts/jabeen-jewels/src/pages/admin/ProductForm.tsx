@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, X, Plus, Package, ImagePlus } from "lucide-react";
 import { ImageUploader } from "@/components/ImageUploader";
 import { useQueryClient } from "@tanstack/react-query";
-import { upload } from "@vercel/blob/client";
 
 const colorEntrySchema = z.object({
   name: z.string().min(1, "Color name required"),
@@ -551,17 +550,27 @@ export default function ProductForm() {
 const UPLOAD_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 
 /**
- * Uploads a single image file via Vercel Blob client upload — the same
- * flow ImageUploader.tsx uses, so per-color photos land in the same
- * storage bucket as the product gallery images.
+ * Uploads a single image file via the FTP-backed upload endpoint — the
+ * same flow ImageUploader.tsx uses, so per-color photos land on the
+ * same image host as the product gallery images.
  */
 async function uploadSingleImage(file: File): Promise<string | null> {
   try {
-    const blob = await upload(file.name, file, {
-      access: "public",
-      handleUploadUrl: `${UPLOAD_BASE}/api/storage/uploads/request-url`,
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${UPLOAD_BASE}/api/storage/uploads/upload-file`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
     });
-    return blob.url;
+
+    if (!response.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const data = await response.json();
+    return data.uploadURL as string;
   } catch (err) {
     console.error("Color image upload failed:", err);
     return null;

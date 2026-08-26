@@ -5,7 +5,7 @@ interface UploadResult {
 
 const UPLOAD_ENDPOINT =
   process.env.IMAGES_UPLOAD_ENDPOINT ||
-  'https://images.techtutorinstitute.com/upload.php';
+  'https://images.techtutorinstitute.com/receive.php';
 const UPLOAD_SECRET = process.env.UPLOAD_SECRET!;
 
 /**

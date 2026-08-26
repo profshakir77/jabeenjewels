@@ -24,18 +24,23 @@ export async function uploadToFtp(
   const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
 
   const client = new Client();
-  client.ftp.verbose = false;
+  client.ftp.verbose = true; // verbose so we get detailed protocol-level errors in logs
 
   try {
     await client.access({
       host: FTP_HOST,
       user: FTP_USER,
       password: FTP_PASSWORD,
-      secure: false, // set true if using explicit FTPS and it works in your environment
+      secure: false,
     });
 
     const readable = Readable.from(buffer);
     await client.uploadFrom(readable, safeName);
+  } catch (err) {
+    // Re-throw with full detail preserved so the route's error log captures it
+    const message = err instanceof Error ? err.message : String(err);
+    const code = (err as any)?.code;
+    throw new Error(`FTP upload failed: ${message}${code ? ` (code: ${code})` : ''}`);
   } finally {
     client.close();
   }

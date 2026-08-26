@@ -95,9 +95,12 @@ router.post(
         },
       });
     } catch (error) {
-      req.log.error({ err: error }, 'Error uploading file via FTP');
-      res.status(500).json({ error: 'Failed to upload file' });
-    }
+  req.log.error({ err: error }, 'Error uploading file via FTP');
+  res.status(500).json({
+    error: 'Failed to upload file',
+    detail: error instanceof Error ? error.message : String(error),
+  });
+}
   },
 );
 
